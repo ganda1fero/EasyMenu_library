@@ -19,6 +19,11 @@ Menu::Menu() {	// конструктор по умолчанию
 	count_of_buttons = 0;
 	byte_system = NULL;
 	kb_numb = NULL;
+	butt_color = CYAN_COLOR;
+	pointer_color = LIGHT_YELLOW_COLOR;
+	info_color = DARK_GRAY_COLOR;
+	info = "";
+	is_info_full = 0;
 	vector<string> buttons_vector;	// пустой вектор
 	// настройка (на всякий)
 	std::setlocale(LC_ALL, "");
@@ -76,7 +81,7 @@ Menu::Menu(string first_butt, string second_butt, string thirt_butt, string four
 	buttons_vector.push_back(tenth_butt);
 }
 
-int32_t Menu::easy_run() {
+int Menu::easy_run() {
 	return easy_run_background();
 }
 
@@ -117,9 +122,15 @@ void Menu::clear_console() {
 }
 
 void Menu::display_menu() {
+	if (is_info_full) {
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), info_color);
+		std::cout << info << std::endl;
+	}
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color);
 	for (int32_t i = 0; i < count_of_buttons; i++) {
 		std::cout << "   " << '[' << buttons_vector[i] << ']' << std::endl;
 	}
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
 }
 
 void Menu::go_to_xy(int32_t x, int32_t y) {
@@ -129,13 +140,15 @@ void Menu::go_to_xy(int32_t x, int32_t y) {
 }
 
 void Menu::display_pointer() {
-	go_to_xy(0, pointer);
+	go_to_xy(0, pointer + is_info_full);
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), pointer_color);
 	std::cout << "-->";
 	last_pointer = pointer;
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
 }
 
 void Menu::update_pointer() {
-	go_to_xy(0, last_pointer);
+	go_to_xy(0, last_pointer + is_info_full);
 	std::cout << "   ";
 	display_pointer();
 }
@@ -199,5 +212,31 @@ void Menu::pop_back_butt() {
 	}
 }
 
+void Menu::set_buttons_color(int32_t color_id) {
+	if (color_id > 15 || color_id < 0)
+		return;
+	butt_color = color_id;
+}
 
+void Menu::set_pointer_color(int32_t color_id) {
+	if (color_id > 15 || color_id < 0)
+		return;
+	pointer_color = color_id;
+}
+
+void Menu::set_info(string new_info) {
+	info = new_info;
+	if (new_info.length() > 0)
+		is_info_full = true;
+}
+
+void Menu::delete_info() {
+	is_info_full = false;
+}
+
+void Menu::set_info_color(int32_t color_id) {
+	if (color_id > 15 || color_id < 0)
+		return;
+	info_color = color_id;
+}
 //
