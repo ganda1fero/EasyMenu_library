@@ -1,5 +1,6 @@
 #include "EasyMenu.h"
 
+// внутренние define (видны только внутри файла)
 #define BYTE_SYSTEM_IS_ONEBYTE -1
 #define BYTE_SYSTEM_IS_NOT_ONEBYTE 224
 #define ENTER_BUT 13														
@@ -19,7 +20,18 @@ Menu::Menu() {	// конструктор по умолчанию
 	count_of_buttons = 0;
 	byte_system = NULL;
 	kb_numb = NULL;
+	butt_color = CYAN_COLOR;
+	pointer_color = LIGHT_YELLOW_COLOR;
+	info_color = DARK_GRAY_COLOR;
+	mark_choose_color = GREEN_COLOR;
+	info = "";
+	is_info_full = 0;
+	mark_choose = false;
+	is_pointer_on = true;
+	is_need_screen_update = false;
+	advenced_optimization = false;
 	vector<string> buttons_vector;	// пустой вектор
+
 	// настройка (на вс€кий)
 	std::setlocale(LC_ALL, "");
 	SetConsoleCP(1251);				//  одова€ страница дл€ ввода
@@ -76,7 +88,7 @@ Menu::Menu(string first_butt, string second_butt, string thirt_butt, string four
 	buttons_vector.push_back(tenth_butt);
 }
 
-int32_t Menu::easy_run() {
+int Menu::easy_run() {
 	return easy_run_background();
 }
 
@@ -117,9 +129,18 @@ void Menu::clear_console() {
 }
 
 void Menu::display_menu() {
-	for (int32_t i = 0; i < count_of_buttons; i++) {
-		std::cout << "   " << '[' << buttons_vector[i] << ']' << std::endl;
+	if (is_info_full) {
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), info_color);
+		std::cout << info << std::endl;
 	}
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color);
+	for (int32_t i = 0; i < count_of_buttons; i++) {
+		if (is_pointer_on)
+			std::cout << "   ";
+		std::cout << '[' << buttons_vector[i] << ']' << std::endl;
+	}
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
+	is_need_screen_update = false;
 }
 
 void Menu::go_to_xy(int32_t x, int32_t y) {
@@ -129,15 +150,44 @@ void Menu::go_to_xy(int32_t x, int32_t y) {
 }
 
 void Menu::display_pointer() {
-	go_to_xy(0, pointer);
-	std::cout << "-->";
+	go_to_xy(0, pointer + is_info_full);
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), pointer_color);
+	if (is_pointer_on) {
+		std::cout << "-->";
+		if (mark_choose) {
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color);
+			std::cout << '[';
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mark_choose_color);
+			std::cout << buttons_vector[pointer];
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color);
+			std::cout << ']';
+			go_to_xy(3, pointer + is_info_full);
+		}
+	}
+	else {
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mark_choose_color);
+		std::cout << '[' << buttons_vector[pointer] << ']';
+		go_to_xy(0, pointer + is_info_full);
+	}
 	last_pointer = pointer;
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
 }
 
 void Menu::update_pointer() {
-	go_to_xy(0, last_pointer);
-	std::cout << "   ";
+	go_to_xy(0, last_pointer + is_info_full);
+	if (is_pointer_on) {
+		std::cout << "   ";
+		if (mark_choose) {
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color);
+			std::cout << '[' << buttons_vector[last_pointer] << ']';
+		}
+	}
+	else {
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color);
+		std::cout << '[' << buttons_vector[last_pointer] << ']';
+	}
 	display_pointer();
+	is_need_pointer_update = false;
 }
 
 bool Menu::keyboard_check(int32_t* byte_system, int32_t* kb_numb) {
@@ -190,14 +240,152 @@ bool Menu::pointer_logic(int32_t *pointer, int32_t *last_pointer, int32_t count_
 void Menu::push_back_butt(string butt_name) {
 	count_of_buttons++;
 	buttons_vector.push_back(butt_name);
+	is_need_screen_update = true;
 }
 
 void Menu::pop_back_butt() {
 	if (count_of_buttons > 0) {
 		count_of_buttons--;
 		buttons_vector.pop_back();
+		is_need_screen_update = true;
 	}
 }
 
+void Menu::set_buttons_color(int32_t color_id) {
+	if (color_id > 15 || color_id < 0)
+		return;
+	butt_color = color_id;
+	is_need_screen_update = true;
+}
 
-//
+void Menu::set_pointer_color(int32_t color_id) {
+	if (color_id > 15 || color_id < 0)
+		return;
+	pointer_color = color_id;
+	is_need_screen_update = true;
+}
+
+void Menu::set_info(string new_info) {
+	info = new_info;
+	if (new_info.length() > 0)
+		is_info_full = true;
+	is_need_screen_update = true;
+}
+
+void Menu::delete_info() {
+	if(is_info_full)
+		is_need_screen_update = true;
+	is_info_full = false;
+}
+
+void Menu::set_info_color(int32_t color_id) {
+	if (color_id > 15 || color_id < 0)
+		return;
+	info_color = color_id;
+	is_need_screen_update = true;
+}
+
+void Menu::set_mark_choose_on() {
+	if (!mark_choose)
+		is_need_screen_update = true;
+	mark_choose = true;
+}
+
+void Menu::set_mark_choose_off() {
+	if (mark_choose)
+		is_need_screen_update = true;
+	mark_choose = false;
+}
+
+void Menu::set_mark_choose_color(int32_t color_id) {
+	if (color_id > 15 || color_id < 0)
+		return;
+	mark_choose_color = color_id;
+	is_need_screen_update = true;
+}
+
+void Menu::edit_butt(int index, string new_text) {
+	if (index >= 0 && index < count_of_buttons) {
+		buttons_vector[index] = new_text;
+		is_need_screen_update = true;
+		return;
+	}
+	return;
+}
+
+void Menu::delete_butt(int index) {
+	if (index >= 0 && index < count_of_buttons) {
+		buttons_vector.erase(buttons_vector.begin() + index);	// удалили
+		count_of_buttons--;
+		is_need_screen_update = true;
+		return;
+	}
+}
+
+void Menu::set_pointer_on() {
+	if(!is_pointer_on)
+		is_need_screen_update = true;
+	is_pointer_on = true;
+}
+
+void Menu::set_pointer_off() {
+	if(is_pointer_on)
+		is_need_screen_update = true;
+	is_pointer_on = false;
+}
+
+void Menu::advenced_tick() {
+	if (is_need_screen_update) {
+		clear_console();
+		if (count_of_buttons < 0)
+			return;
+		display_menu();		// отобразили само меню (кнопки и т д)
+		display_pointer();	// отобразили стрелочку
+		is_need_pointer_update = false;
+	}
+	if (keyboard_check(&byte_system, &kb_numb)) {
+		if (byte_system == BYTE_SYSTEM_IS_NOT_ONEBYTE) {	// не однобайтова€ система (возможно стрелочки)
+			if (pointer_logic(&pointer, &last_pointer, count_of_buttons, kb_numb))
+				update_pointer();
+		}
+		else if (byte_system == BYTE_SYSTEM_IS_ONEBYTE) {	// одноайтова€ система (может быть ENTER)
+			if (kb_numb == ENTER_BUT) {
+				is_butt_pressed = true;
+				pressed_but = pointer;
+			}
+		}
+	}
+	else if (advenced_optimization)
+		Sleep(15);
+}
+
+void Menu::advenced_display_menu() {
+	if (count_of_buttons < 0)
+		return;
+	display_menu();		// отобразили само меню (кнопки и т д)
+	display_pointer();	// отобразили стрелочку
+}
+
+bool Menu::advenced_is_pressed() {
+	return is_butt_pressed;
+}
+
+int Menu::advenced_pressed_butt() {
+	if (is_butt_pressed) {
+		is_butt_pressed = false;
+		return pressed_but;
+	}
+	return -1;
+}
+
+void Menu::advenced_clear_console() {
+	clear_console();
+}
+
+void Menu::advenced_optimization_on() {
+	advenced_optimization = true;
+}
+
+void Menu::advenced_optimization_off() {
+	advenced_optimization = false;
+}
