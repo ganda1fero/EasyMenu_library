@@ -13,7 +13,7 @@
 
 // все дл€ Menu
 
-Menu::Menu() {	// конструктор по умолчанию
+EasyMenu::EasyMenu() {	// конструктор по умолчанию
 	// инициализаци€
 	pointer = 0;
 	last_pointer = NULL;
@@ -29,8 +29,7 @@ Menu::Menu() {	// конструктор по умолчанию
 	mark_choose = false;
 	is_pointer_on = true;
 	is_need_screen_update = false;
-	advenced_optimization = false;
-	vector<string> buttons_vector;	// пустой вектор
+	advanced_optimization = false;
 
 	// настройка (на вс€кий)
 	std::setlocale(LC_ALL, "");
@@ -38,61 +37,61 @@ Menu::Menu() {	// конструктор по умолчанию
 	SetConsoleOutputCP(1251);		//  одова€ страница дл€ вывода
 }
 
-Menu::Menu(string first_butt) : Menu() {	// конструктор с 1 кнопкой
+EasyMenu::EasyMenu(string first_butt) : EasyMenu() {	// конструктор с 1 кнопкой
 	count_of_buttons++;
 	buttons_vector.push_back(first_butt);	// добавли 
 }
 
-Menu::Menu(string first_butt, string second_butt) : Menu(first_butt) {	// конструтор с 2 кнопками
+EasyMenu::EasyMenu(string first_butt, string second_butt) : EasyMenu(first_butt) {	// конструтор с 2 кнопками
 	count_of_buttons++;
 	buttons_vector.push_back(second_butt);
 }
 
-Menu::Menu(string first_butt, string second_butt, string thirth_butt) : Menu(first_butt, second_butt) {
+EasyMenu::EasyMenu(string first_butt, string second_butt, string thirth_butt) : EasyMenu(first_butt, second_butt) {
 	count_of_buttons++;
 	buttons_vector.push_back(thirth_butt);
 }
 
-Menu::Menu(string first_butt, string second_butt, string thirt_butt, string fourth_butt) : Menu(first_butt, second_butt, thirt_butt) {
+EasyMenu::EasyMenu(string first_butt, string second_butt, string thirt_butt, string fourth_butt) : EasyMenu(first_butt, second_butt, thirt_butt) {
 	count_of_buttons++;
 	buttons_vector.push_back(fourth_butt);
 }
 
-Menu::Menu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt) : Menu(first_butt, second_butt, thirt_butt, fourth_butt) {
+EasyMenu::EasyMenu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt) : EasyMenu(first_butt, second_butt, thirt_butt, fourth_butt) {
 	count_of_buttons++;
 	buttons_vector.push_back(fifth_butt);
 }
 
-Menu::Menu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt) : Menu(first_butt, second_butt, thirt_butt, fourth_butt, fifth_butt) {
+EasyMenu::EasyMenu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt) : EasyMenu(first_butt, second_butt, thirt_butt, fourth_butt, fifth_butt) {
 	count_of_buttons++;
 	buttons_vector.push_back(sixth_butt);
 }
 
-Menu::Menu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt) : Menu(first_butt, second_butt, thirt_butt, fourth_butt, fifth_butt, sixth_butt) {
+EasyMenu::EasyMenu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt) : EasyMenu(first_butt, second_butt, thirt_butt, fourth_butt, fifth_butt, sixth_butt) {
 	count_of_buttons++;
 	buttons_vector.push_back(seventh_butt);
 }
 
-Menu::Menu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eigth_butt) : Menu(first_butt, second_butt, thirt_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt) {
+EasyMenu::EasyMenu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eigth_butt) : EasyMenu(first_butt, second_butt, thirt_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt) {
 	count_of_buttons++;
 	buttons_vector.push_back(eigth_butt);
 }
 
-Menu::Menu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eigth_butt, string nineth_butt) : Menu(first_butt, second_butt, thirt_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt, eigth_butt) {
+EasyMenu::EasyMenu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eigth_butt, string nineth_butt) : EasyMenu(first_butt, second_butt, thirt_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt, eigth_butt) {
 	count_of_buttons++;
 	buttons_vector.push_back(nineth_butt);
 }
 
-Menu::Menu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eigth_butt, string nineth_butt, string tenth_butt) : Menu(first_butt, second_butt, thirt_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt, eigth_butt, nineth_butt) {
+EasyMenu::EasyMenu(string first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eigth_butt, string nineth_butt, string tenth_butt) : EasyMenu(first_butt, second_butt, thirt_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt, eigth_butt, nineth_butt) {
 	count_of_buttons++;
 	buttons_vector.push_back(tenth_butt);
 }
 
-int Menu::easy_run() {
+int EasyMenu::easy_run() {
 	return easy_run_background();
 }
 
-int32_t Menu::easy_run_background() {
+int32_t EasyMenu::easy_run_background() {
 	if (count_of_buttons <= 0)
 		return -1;		// ошибка (нет кнопок)
 	clear_console();	// очистили консоль
@@ -111,11 +110,11 @@ int32_t Menu::easy_run_background() {
 				}
 			}
 		}
-		else Sleep(15);
+		else Sleep(5);
 	}
 }
 
-void Menu::clear_console() {
+void EasyMenu::clear_console() {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD coordScreen = { 0, 0 };
 	DWORD charsWritten;
@@ -128,7 +127,7 @@ void Menu::clear_console() {
 	SetConsoleCursorPosition(hConsole, coordScreen);
 }
 
-void Menu::display_menu() {
+void EasyMenu::display_menu() {
 	if (is_info_full) {
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), info_color);
 		std::cout << info << std::endl;
@@ -143,13 +142,13 @@ void Menu::display_menu() {
 	is_need_screen_update = false;
 }
 
-void Menu::go_to_xy(int32_t x, int32_t y) {
+void EasyMenu::go_to_xy(int32_t x, int32_t y) {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD pos = { short(x), short(y) };
 	SetConsoleCursorPosition(hConsole, pos);
 }
 
-void Menu::display_pointer() {
+void EasyMenu::display_pointer() {
 	go_to_xy(0, pointer + is_info_full);
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), pointer_color);
 	if (is_pointer_on) {
@@ -173,7 +172,7 @@ void Menu::display_pointer() {
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
 }
 
-void Menu::update_pointer() {
+void EasyMenu::update_pointer() {
 	go_to_xy(0, last_pointer + is_info_full);
 	if (is_pointer_on) {
 		std::cout << "   ";
@@ -190,7 +189,7 @@ void Menu::update_pointer() {
 	is_need_pointer_update = false;
 }
 
-bool Menu::keyboard_check(int32_t* byte_system, int32_t* kb_numb) {
+bool EasyMenu::keyboard_check(int32_t* byte_system, int32_t* kb_numb) {
 	if (_kbhit()) {															// keyboardhit() если нажата кака€-нибудь клавиша
 		int key = _getch();													// получаем номер символа (возможно первого -> 2-х байтовые клавиши)
 		if (key == 0) {														// если первый байт = 0. (‘ункциональные клавиши F1ЦF12 в старых верси€х DOS)
@@ -218,7 +217,7 @@ bool Menu::keyboard_check(int32_t* byte_system, int32_t* kb_numb) {
 	}
 }
 
-bool Menu::pointer_logic(int32_t *pointer, int32_t *last_pointer, int32_t count_of_buttons, int32_t kb_numb) {
+bool EasyMenu::pointer_logic(int32_t *pointer, int32_t *last_pointer, int32_t count_of_buttons, int32_t kb_numb) {
 	*last_pointer = *pointer;	// переписали значение
 	if (kb_numb == DOWN_POINTER_BUT) {
 		if (*pointer >= count_of_buttons - 1)
@@ -237,13 +236,13 @@ bool Menu::pointer_logic(int32_t *pointer, int32_t *last_pointer, int32_t count_
 	return true;
 }
 
-void Menu::push_back_butt(string butt_name) {
+void EasyMenu::push_back_butt(string butt_name) {
 	count_of_buttons++;
 	buttons_vector.push_back(butt_name);
 	is_need_screen_update = true;
 }
 
-void Menu::pop_back_butt() {
+void EasyMenu::pop_back_butt() {
 	if (count_of_buttons > 0) {
 		count_of_buttons--;
 		buttons_vector.pop_back();
@@ -251,60 +250,60 @@ void Menu::pop_back_butt() {
 	}
 }
 
-void Menu::set_buttons_color(int32_t color_id) {
+void EasyMenu::set_buttons_color(int32_t color_id) {
 	if (color_id > 15 || color_id < 0)
 		return;
 	butt_color = color_id;
 	is_need_screen_update = true;
 }
 
-void Menu::set_pointer_color(int32_t color_id) {
+void EasyMenu::set_pointer_color(int32_t color_id) {
 	if (color_id > 15 || color_id < 0)
 		return;
 	pointer_color = color_id;
 	is_need_screen_update = true;
 }
 
-void Menu::set_info(string new_info) {
+void EasyMenu::set_info(string new_info) {
 	info = new_info;
 	if (new_info.length() > 0)
 		is_info_full = true;
 	is_need_screen_update = true;
 }
 
-void Menu::delete_info() {
+void EasyMenu::delete_info() {
 	if(is_info_full)
 		is_need_screen_update = true;
 	is_info_full = false;
 }
 
-void Menu::set_info_color(int32_t color_id) {
+void EasyMenu::set_info_color(int32_t color_id) {
 	if (color_id > 15 || color_id < 0)
 		return;
 	info_color = color_id;
 	is_need_screen_update = true;
 }
 
-void Menu::set_mark_choose_on() {
+void EasyMenu::set_mark_choose_on() {
 	if (!mark_choose)
 		is_need_screen_update = true;
 	mark_choose = true;
 }
 
-void Menu::set_mark_choose_off() {
+void EasyMenu::set_mark_choose_off() {
 	if (mark_choose)
 		is_need_screen_update = true;
 	mark_choose = false;
 }
 
-void Menu::set_mark_choose_color(int32_t color_id) {
+void EasyMenu::set_mark_choose_color(int32_t color_id) {
 	if (color_id > 15 || color_id < 0)
 		return;
 	mark_choose_color = color_id;
 	is_need_screen_update = true;
 }
 
-void Menu::edit_butt(int index, string new_text) {
+void EasyMenu::edit_butt(int index, string new_text) {
 	if (index >= 0 && index < count_of_buttons) {
 		buttons_vector[index] = new_text;
 		is_need_screen_update = true;
@@ -313,7 +312,7 @@ void Menu::edit_butt(int index, string new_text) {
 	return;
 }
 
-void Menu::delete_butt(int index) {
+void EasyMenu::delete_butt(int index) {
 	if (index >= 0 && index < count_of_buttons) {
 		buttons_vector.erase(buttons_vector.begin() + index);	// удалили
 		count_of_buttons--;
@@ -322,19 +321,19 @@ void Menu::delete_butt(int index) {
 	}
 }
 
-void Menu::set_pointer_on() {
+void EasyMenu::set_pointer_on() {
 	if(!is_pointer_on)
 		is_need_screen_update = true;
 	is_pointer_on = true;
 }
 
-void Menu::set_pointer_off() {
+void EasyMenu::set_pointer_off() {
 	if(is_pointer_on)
 		is_need_screen_update = true;
 	is_pointer_on = false;
 }
 
-void Menu::advenced_tick() {
+void EasyMenu::advanced_tick() {
 	if (is_need_screen_update) {
 		clear_console();
 		if (count_of_buttons < 0)
@@ -355,22 +354,22 @@ void Menu::advenced_tick() {
 			}
 		}
 	}
-	else if (advenced_optimization)
-		Sleep(15);
+	else if (advanced_optimization)
+		Sleep(5);
 }
 
-void Menu::advenced_display_menu() {
+void EasyMenu::advanced_display_menu() {
 	if (count_of_buttons < 0)
 		return;
 	display_menu();		// отобразили само меню (кнопки и т д)
 	display_pointer();	// отобразили стрелочку
 }
 
-bool Menu::advenced_is_pressed() {
+bool EasyMenu::advanced_is_pressed() {
 	return is_butt_pressed;
 }
 
-int Menu::advenced_pressed_butt() {
+int EasyMenu::advanced_pressed_butt() {
 	if (is_butt_pressed) {
 		is_butt_pressed = false;
 		return pressed_but;
@@ -378,14 +377,14 @@ int Menu::advenced_pressed_butt() {
 	return -1;
 }
 
-void Menu::advenced_clear_console() {
+void EasyMenu::advanced_clear_console() {
 	clear_console();
 }
 
-void Menu::advenced_optimization_on() {
-	advenced_optimization = true;
+void EasyMenu::advanced_optimization_on() {
+	advanced_optimization = true;
 }
 
-void Menu::advenced_optimization_off() {
-	advenced_optimization = false;
+void EasyMenu::advanced_optimization_off() {
+	advanced_optimization = false;
 }

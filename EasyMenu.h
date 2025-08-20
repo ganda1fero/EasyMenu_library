@@ -27,19 +27,19 @@
 using std::string;
 using std::vector;
 
-class Menu {
+class EasyMenu {
 public:
 	//простое использование
 	int easy_run();		// метод для простого запуска (обертка)
 
 	//продвинутое использование (возможно контролировать ситуацию)
-	void advenced_tick();// 1 тик логики 
-	void advenced_display_menu();// отобразить меню
-	bool advenced_is_pressed();
-	int advenced_pressed_butt();
-	void advenced_clear_console();
-	void advenced_optimization_on();
-	void advenced_optimization_off();
+	void advanced_tick();// 1 тик логики 
+	void advanced_display_menu();// отобразить меню
+	bool advanced_is_pressed();
+	int advanced_pressed_butt();
+	void advanced_clear_console();
+	void advanced_optimization_on();
+	void advanced_optimization_off();
 
 	// настройка кнопок меню
 	void push_back_butt(string butt_name);		// добавить кнопку в конец
@@ -62,17 +62,17 @@ public:
 	void set_pointer_on();
 
 	// консрукторы
-	Menu();					// конструктор по умоланию (все сводится к нему)
-	Menu(string	first_butt);
-	Menu(string	first_butt, string second_butt);
-	Menu(string	first_butt, string second_butt, string thirth_butt);
-	Menu(string	first_butt, string second_butt, string thirt_butt, string fourth_butt);
-	Menu(string	first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt);
-	Menu(string	first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt);
-	Menu(string	first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt);
-	Menu(string	first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eigth_butt);
-	Menu(string	first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eigth_butt, string nineth_butt);
-	Menu(string	first_butt, string second_butt, string thirt_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eigth_butt, string nineth_butt, string tenth_butt);
+	EasyMenu();					// конструктор по умоланию (все сводится к нему)
+	EasyMenu(string	first_butt);
+	EasyMenu(string	first_butt, string second_butt);
+	EasyMenu(string	first_butt, string second_butt, string third_butt);
+	EasyMenu(string	first_butt, string second_butt, string third_butt, string fourth_butt);
+	EasyMenu(string	first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt);
+	EasyMenu(string	first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt);
+	EasyMenu(string	first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt);
+	EasyMenu(string	first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt);
+	EasyMenu(string	first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt, string ninth_butt);
+	EasyMenu(string	first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt, string ninth_butt, string tenth_butt);
 protected:
 
 private:
@@ -99,7 +99,7 @@ private:
 	bool is_info_full;
 	bool mark_choose;
 	bool is_pointer_on;
-	bool advenced_optimization;
+	bool advanced_optimization;
 
 	//поля триггеров
 	bool is_need_screen_update;
