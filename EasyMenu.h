@@ -49,11 +49,12 @@ public:
     void set_info(string new_info);
     void delete_info();
 
-    void set_buttons_color(int32_t color_id);
-    void set_pointer_color(int32_t color_id);
-    void set_info_color(int32_t color_id);
-    void set_mark_choose_color(int32_t color_id);
-    void set_text_color(int32_t color_id);
+    void set_color(int32_t index, int32_t color_id);
+    void set_buttons_main_color(int32_t color_id);
+    void set_pointer_main_color(int32_t color_id);
+    void set_info_main_color(int32_t color_id);
+    void set_mark_choose_main_color(int32_t color_id);
+    void set_text_main_color(int32_t color_id);
 
     void set_x_y_position(int32_t x, int32_t y);
     void set_mark_choose_on();
@@ -74,6 +75,19 @@ public:
     EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt, string ninth_butt, string tenth_butt);
 
 private:
+    struct ButtData
+    {
+        ButtData(string name, int32_t type, int32_t color_id) {
+            this->name = name;
+            this->type = type;
+            this->color_id = color_id;
+        }
+        ~ButtData() {}
+        string name = "";
+        int32_t type = 1;
+        int32_t color_id = WHITE_COLOR;
+    };
+
     int32_t x_pos_;
     int32_t y_pos_;
 
@@ -91,8 +105,7 @@ private:
     int32_t mark_choose_color_;
     int32_t text_color_;
 
-    vector<int32_t> buttons_type_vector_;
-    vector<string> buttons_vector_;
+    vector<ButtData> buttons_data_vector_;
     string info_;
 
     bool is_info_full_;

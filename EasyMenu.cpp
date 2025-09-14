@@ -46,72 +46,62 @@ EasyMenu::EasyMenu() {
 
 EasyMenu::EasyMenu(string first_butt) : EasyMenu() {
     count_of_buttons_++;
-    buttons_vector_.push_back(first_butt);
     count_of_lines_++;
-    buttons_type_vector_.push_back(BUTTON);
+    buttons_data_vector_.push_back(ButtData(first_butt, BUTTON, butt_color_));
 }
 
 EasyMenu::EasyMenu(string first_butt, string second_butt) : EasyMenu(first_butt) {
     count_of_buttons_++;
-    buttons_vector_.push_back(second_butt);
     count_of_lines_++;
-    buttons_type_vector_.push_back(BUTTON);
+    buttons_data_vector_.push_back(ButtData(second_butt, BUTTON, butt_color_));
 }
 
 EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt) : EasyMenu(first_butt, second_butt) {
     count_of_buttons_++;
-    buttons_vector_.push_back(third_butt);
     count_of_lines_++;
-    buttons_type_vector_.push_back(BUTTON);
+    buttons_data_vector_.push_back(ButtData(third_butt, BUTTON, butt_color_));
 }
 
 EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt) : EasyMenu(first_butt, second_butt, third_butt) {
     count_of_buttons_++;
-    buttons_vector_.push_back(fourth_butt);
     count_of_lines_++;
-    buttons_type_vector_.push_back(BUTTON);
+    buttons_data_vector_.push_back(ButtData(fourth_butt, BUTTON, butt_color_));
 }
 
 EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt) {
     count_of_buttons_++;
-    buttons_vector_.push_back(fifth_butt);
     count_of_lines_++;
-    buttons_type_vector_.push_back(BUTTON);
+    buttons_data_vector_.push_back(ButtData(fifth_butt, BUTTON, butt_color_));
 }
 
 EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt, fifth_butt) {
     count_of_buttons_++;
-    buttons_vector_.push_back(sixth_butt);
     count_of_lines_++;
-    buttons_type_vector_.push_back(BUTTON);
+    buttons_data_vector_.push_back(ButtData(sixth_butt, BUTTON, butt_color_));
 }
 
 EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt, fifth_butt, sixth_butt) {
     count_of_buttons_++;
-    buttons_vector_.push_back(seventh_butt);
     count_of_lines_++;
-    buttons_type_vector_.push_back(BUTTON);
+    buttons_data_vector_.push_back(ButtData(seventh_butt, BUTTON, butt_color_));
 }
 
 EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt) {
     count_of_buttons_++;
-    buttons_vector_.push_back(eighth_butt);
     count_of_lines_++;
-    buttons_type_vector_.push_back(BUTTON);
+    buttons_data_vector_.push_back(ButtData(eighth_butt, BUTTON, butt_color_));
 }
 
 EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt, string ninth_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt, eighth_butt) {
     count_of_buttons_++;
-    buttons_vector_.push_back(ninth_butt);
     count_of_lines_++;
-    buttons_type_vector_.push_back(BUTTON);
+    buttons_data_vector_.push_back(ButtData(ninth_butt, BUTTON, butt_color_));
 }
 
 EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt, string ninth_butt, string tenth_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt, eighth_butt, ninth_butt) {
     count_of_buttons_++;
-    buttons_vector_.push_back(tenth_butt);
     count_of_lines_++;
-    buttons_type_vector_.push_back(BUTTON);
+    buttons_data_vector_.push_back(ButtData(tenth_butt, BUTTON, butt_color_));
 }
 
 int EasyMenu::easy_run() {
@@ -160,19 +150,16 @@ void EasyMenu::display_menu() {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), info_color_);
         std::cout << info_;
     }
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
     for (int32_t i = 0; i < count_of_lines_; i++) {
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[i].color_id);
         go_to_xy(x_pos_, y_pos_ + is_info_full_ + i);
-        if (buttons_type_vector_[i] == BUTTON) {
+        if (buttons_data_vector_[i].type == BUTTON) {
             if (is_pointer_on_)
                 std::cout << "   ";
-            std::cout << '[' << buttons_vector_[i] << ']';
+            std::cout << '[' << buttons_data_vector_[i].name << ']';
         } 
-        else {
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), text_color_);
-            std::cout << buttons_vector_[i];
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
-        }
+        else 
+            std::cout << buttons_data_vector_[i].name;
     }
     std::cout.flush(); // очищаем буфер
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
@@ -194,7 +181,7 @@ void EasyMenu::display_pointer() {
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
             std::cout << '[';
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mark_choose_color_);
-            std::cout << buttons_vector_[get_pointer_index(pointer_)];
+            std::cout << buttons_data_vector_[get_pointer_index(pointer_)].name;
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
             std::cout << ']';
             go_to_xy(x_pos_ + 3, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
@@ -202,7 +189,7 @@ void EasyMenu::display_pointer() {
     }
     else {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mark_choose_color_);
-        std::cout << '[' << buttons_vector_[get_pointer_index(pointer_)] << ']';
+        std::cout << '[' << buttons_data_vector_[get_pointer_index(pointer_)].name << ']';
         go_to_xy(x_pos_, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
     }
     last_pointer_ = pointer_;
@@ -215,13 +202,13 @@ void EasyMenu::update_pointer() {
     if (is_pointer_on_) {
         std::cout << "   ";
         if (mark_choose_) {
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
-            std::cout << '[' << buttons_vector_[get_pointer_index(last_pointer_)] << ']';
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[get_pointer_index(last_pointer_)].color_id);
+            std::cout << '[' << buttons_data_vector_[get_pointer_index(last_pointer_)].name << ']';
         }
     }
     else {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
-        std::cout << '[' << buttons_vector_[get_pointer_index(last_pointer_)] << ']';
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[get_pointer_index(last_pointer_)].color_id);
+        std::cout << '[' << buttons_data_vector_[get_pointer_index(last_pointer_)].name << ']';
     }
     std::cout.flush(); // чтобы не было отставания (очищаем буфер)
     display_pointer();  
@@ -278,15 +265,13 @@ bool EasyMenu::pointer_logic(int32_t* pointer, int32_t* last_pointer, int32_t co
 void EasyMenu::push_back_butt(string butt_name) {
     count_of_buttons_++;
     count_of_lines_++;
-    buttons_vector_.push_back(butt_name);
-    buttons_type_vector_.push_back(BUTTON);
+    buttons_data_vector_.push_back(ButtData(butt_name, BUTTON, butt_color_));
     is_need_screen_update_ = true;
 }
 
 void EasyMenu::push_back_text(string text) {
     count_of_lines_++;
-    buttons_vector_.push_back(text);
-    buttons_type_vector_.push_back(TEXT);
+    buttons_data_vector_.push_back(ButtData(text, TEXT, text_color_));
     is_need_screen_update_ = true;
 }
 
@@ -295,8 +280,7 @@ void EasyMenu::insert_butt(int32_t prev_index, string butt_name) {
         prev_index = -1;
     count_of_buttons_++;
     count_of_lines_++;
-    buttons_vector_.insert(buttons_vector_.begin() + prev_index + 1, butt_name);
-    buttons_type_vector_.insert(buttons_type_vector_.begin() + prev_index + 1, BUTTON);
+    buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index + 1, ButtData(butt_name, BUTTON, butt_color_));
     is_need_screen_update_ = true;
 }
 
@@ -304,30 +288,53 @@ void EasyMenu::insert_text(int32_t prev_index, string text) {
     if (prev_index < -1)
         prev_index = -1;
     count_of_lines_++;
-    buttons_vector_.insert(buttons_vector_.begin() + prev_index + 1, text);
-    buttons_type_vector_.insert(buttons_type_vector_.begin() + prev_index + 1, TEXT);
+    buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index + 1, ButtData(text, TEXT, text_color_));
     is_need_screen_update_ = true;
 }
 
 void EasyMenu::pop_back() {
     if (count_of_lines_ > 0) {
-        if (buttons_type_vector_[count_of_lines_ - 1] == BUTTON)
+        if (buttons_data_vector_[count_of_lines_ - 1].type != TEXT)
             count_of_buttons_--;
         count_of_lines_--;
-        buttons_vector_.pop_back();
-        buttons_type_vector_.pop_back();
+        buttons_data_vector_.pop_back();
         is_need_screen_update_ = true;
     }
 }
 
-void EasyMenu::set_buttons_color(int32_t color_id) {
+void EasyMenu::set_color(int32_t index, int32_t color_id) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return;
+    if(color_id > 15 || color_id < 0)
+        switch (buttons_data_vector_[index].type)
+        {
+        case BUTTON:
+            color_id = butt_color_;
+            break;
+        case TEXT:
+            color_id = text_color_;
+            break;
+        /*
+        case ADVANCED_INPUT:
+            color_id = 
+            break;
+        */
+        default:
+            color_id = WHITE_COLOR;
+            break;
+        }
+    buttons_data_vector_[index].color_id = color_id;
+    return;
+}
+
+void EasyMenu::set_buttons_main_color(int32_t color_id) {
     if (color_id > 15 || color_id < 0)
         return;
     butt_color_ = color_id;
     is_need_screen_update_ = true;
 }
 
-void EasyMenu::set_pointer_color(int32_t color_id) {
+void EasyMenu::set_pointer_main_color(int32_t color_id) {
     if (color_id > 15 || color_id < 0)
         return;
     pointer_color_ = color_id;
@@ -347,7 +354,7 @@ void EasyMenu::delete_info() {
     is_info_full_ = false;
 }
 
-void EasyMenu::set_info_color(int32_t color_id) {
+void EasyMenu::set_info_main_color(int32_t color_id) {
     if (color_id > 15 || color_id < 0)
         return;
     info_color_ = color_id;
@@ -366,14 +373,14 @@ void EasyMenu::set_mark_choose_off() {
     mark_choose_ = false;
 }
 
-void EasyMenu::set_mark_choose_color(int32_t color_id) {
+void EasyMenu::set_mark_choose_main_color(int32_t color_id) {
     if (color_id > 15 || color_id < 0)
         return;
     mark_choose_color_ = color_id;
     is_need_screen_update_ = true;
 }
 
-void EasyMenu::set_text_color(int32_t color_id) {
+void EasyMenu::set_text_main_color(int32_t color_id) {
     if (color_id > 15 || color_id < 0)
         return;
     text_color_ = color_id;
@@ -382,7 +389,7 @@ void EasyMenu::set_text_color(int32_t color_id) {
 
 void EasyMenu::edit(int index, string new_text) {
     if (index >= 0 && index < count_of_lines_) {
-        buttons_vector_[index] = new_text;
+        buttons_data_vector_[index].name = new_text;
         is_need_screen_update_ = true;
         return;
     }
@@ -391,9 +398,8 @@ void EasyMenu::edit(int index, string new_text) {
 
 void EasyMenu::delete_butt(int index) {
     if (index >= 0 && index < count_of_lines_) {
-        bool wasButton = (buttons_type_vector_[index] != TEXT);
-        buttons_vector_.erase(buttons_vector_.begin() + index);
-        buttons_type_vector_.erase(buttons_type_vector_.begin() + index);
+        bool wasButton = (buttons_data_vector_[index].type != TEXT);
+        buttons_data_vector_.erase(buttons_data_vector_.begin() + index);
         if (wasButton) {
             count_of_buttons_--;
             if (pointer_ >= count_of_buttons_)
@@ -410,18 +416,13 @@ void EasyMenu::delete_butt(int index) {
 void EasyMenu::delete_all_text() {
     if (count_of_buttons_ == count_of_lines_)
         return;
-    vector<string> tmp_vector;
-    vector<int32_t> tmp_vector_types;
+    vector<ButtData> tmp_vector;
     tmp_vector.reserve(count_of_buttons_);
-    tmp_vector_types.reserve(count_of_buttons_);
     for (int i{ 0 }; i < count_of_lines_; i++)
-        if (buttons_type_vector_[i] != TEXT) {
-            tmp_vector.push_back(buttons_vector_[i]);
-            tmp_vector_types.push_back(buttons_type_vector_[i]);
-        }
+        if (buttons_data_vector_[i].type != TEXT)
+            tmp_vector.push_back(ButtData(buttons_data_vector_[i].name, buttons_data_vector_[i].type, buttons_data_vector_[i].color_id));
     // записали только НЕ ТЕКСТ
-    buttons_vector_ = tmp_vector;
-    buttons_type_vector_ = tmp_vector_types;
+    buttons_data_vector_ = tmp_vector;
     count_of_lines_ = count_of_buttons_;
 
     if (pointer_ >= count_of_buttons_)
@@ -519,7 +520,7 @@ int32_t EasyMenu::get_pointer_index(int32_t pointer_) {
         return pointer_;
     int32_t tmp{ -1 };
     for (int i{ 0 }; i < count_of_lines_; i++) {
-        if (buttons_type_vector_[i] == BUTTON)
+        if (buttons_data_vector_[i].type != TEXT)
             tmp++;
         if (tmp == pointer_)
             return i;   // возвращаем нужный индекс 
