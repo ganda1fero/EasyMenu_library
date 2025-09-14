@@ -39,9 +39,13 @@ public:
     void advanced_optimization_off();
 
     void push_back_butt(string butt_name);
-    void pop_back_butt();
-    void edit_butt(int index, string new_text);
+    void push_back_text(string text);
+    void insert_butt(int32_t prev_index, string butt_name);
+    void insert_text(int32_t prev_index, string text);
+    void edit(int index, string new_text);
+    void pop_back();
     void delete_butt(int index);
+    void delete_all_text();
     void set_info(string new_info);
     void delete_info();
 
@@ -49,6 +53,7 @@ public:
     void set_pointer_color(int32_t color_id);
     void set_info_color(int32_t color_id);
     void set_mark_choose_color(int32_t color_id);
+    void set_text_color(int32_t color_id);
 
     void set_x_y_position(int32_t x, int32_t y);
     void set_mark_choose_on();
@@ -72,6 +77,7 @@ private:
     int32_t x_pos_;
     int32_t y_pos_;
 
+    int32_t count_of_lines_;
     int32_t count_of_buttons_;
     int32_t pointer_;
     int32_t last_pointer_;
@@ -83,7 +89,9 @@ private:
     int32_t pointer_color_;
     int32_t info_color_;
     int32_t mark_choose_color_;
+    int32_t text_color_;
 
+    vector<int32_t> buttons_type_vector_;
     vector<string> buttons_vector_;
     string info_;
 
@@ -106,6 +114,7 @@ private:
     void go_to_xy(int32_t x, int32_t y);
     bool keyboard_check(int32_t* byte_system, int32_t* kb_numb);
     bool pointer_logic(int32_t* pointer, int32_t* last_pointer, int32_t count_of_buttons, int32_t kb_numb);
+    int32_t get_pointer_index(int32_t pointer_);
 };
 
 #endif
