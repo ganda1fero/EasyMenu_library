@@ -13,6 +13,8 @@
 EasyMenu::EasyMenu() {
     pointer_ = 0;
     last_pointer_ = -1;
+    x_pos_ = 0;
+    y_pos_ = 0;
     count_of_buttons_ = 0;
     byte_system_ = -1;
     kb_numb_ = -1;
@@ -123,16 +125,19 @@ void EasyMenu::clear_console() {
 }
 
 void EasyMenu::display_menu() {
+    go_to_xy(x_pos_, y_pos_);
     if (is_info_full_) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), info_color_);
-        std::cout << info_ << std::endl;
+        std::cout << info_;
     }
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
     for (int32_t i = 0; i < count_of_buttons_; i++) {
+        go_to_xy(x_pos_, y_pos_ + is_info_full_ + i);
         if (is_pointer_on_)
             std::cout << "   ";
-        std::cout << '[' << buttons_vector_[i] << ']' << std::endl;
+        std::cout << '[' << buttons_vector_[i] << ']';
     }
+    std::cout.flush(); // очищаем буфер
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
     is_need_screen_update_ = false;
 }
@@ -144,7 +149,7 @@ void EasyMenu::go_to_xy(int32_t x, int32_t y) {
 }
 
 void EasyMenu::display_pointer() {
-    go_to_xy(0, pointer_ + is_info_full_);
+    go_to_xy(x_pos_, y_pos_ + pointer_ + is_info_full_);
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), pointer_color_);
     if (is_pointer_on_) {
         std::cout << "-->";
@@ -155,20 +160,21 @@ void EasyMenu::display_pointer() {
             std::cout << buttons_vector_[pointer_];
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
             std::cout << ']';
-            go_to_xy(3, pointer_ + is_info_full_);
+            go_to_xy(x_pos_ + 3, y_pos_ + pointer_ + is_info_full_);
         }
     }
     else {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mark_choose_color_);
         std::cout << '[' << buttons_vector_[pointer_] << ']';
-        go_to_xy(0, pointer_ + is_info_full_);
+        go_to_xy(x_pos_, y_pos_ + pointer_ + is_info_full_);
     }
     last_pointer_ = pointer_;
+    std::cout.flush(); // очищаем буфер
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
 }
 
 void EasyMenu::update_pointer() {
-    go_to_xy(0, last_pointer_ + is_info_full_);
+    go_to_xy(x_pos_, y_pos_ + last_pointer_ + is_info_full_);
     if (is_pointer_on_) {
         std::cout << "   ";
         if (mark_choose_) {
@@ -331,8 +337,10 @@ void EasyMenu::set_pointer_off() {
 void EasyMenu::advanced_tick() {
     if (is_need_screen_update_) {
         clear_console();
-        if (count_of_buttons_ <= 0)
+        if (count_of_buttons_ <= 0) {
+            is_need_pointer_update_ = false;
             return;
+        }
         display_menu();
         display_pointer();
         is_need_pointer_update_ = false;
@@ -382,4 +390,13 @@ void EasyMenu::advanced_optimization_on() {
 
 void EasyMenu::advanced_optimization_off() {
     advanced_optimization_ = false;
+}
+
+void EasyMenu::set_x_y_position(int32_t x, int32_t y) {
+    if (x < 0)
+        x = 0;
+    if (y < 0)
+        y = 0;
+    x_pos_ = x;
+    y_pos_ = y;
 }

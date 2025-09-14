@@ -50,6 +50,7 @@ public:
     void set_info_color(int32_t color_id);
     void set_mark_choose_color(int32_t color_id);
 
+    void set_x_y_position(int32_t x, int32_t y);
     void set_mark_choose_on();
     void set_mark_choose_off();
     void set_pointer_off();
@@ -68,6 +69,9 @@ public:
     EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt, string ninth_butt, string tenth_butt);
 
 private:
+    int32_t x_pos_;
+    int32_t y_pos_;
+
     int32_t count_of_buttons_;
     int32_t pointer_;
     int32_t last_pointer_;
