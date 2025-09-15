@@ -40,9 +40,16 @@ public:
 
     void push_back_butt(string butt_name);
     void push_back_text(string text);
+    void push_back_checkbox(string text);
+    void push_back_checkbox(string text, bool is_activated);
+
     void insert_butt(int32_t prev_index, string butt_name);
     void insert_text(int32_t prev_index, string text);
+    void insert_checkbox(int32_t prev_index, string text);
+    void insert_checkbox(int32_t prev_index, string text, bool is_activated);
+
     void edit(int index, string new_text);
+
     void pop_back();
     void delete_butt(int index);
     void delete_all_text();
@@ -55,6 +62,7 @@ public:
     void set_info_main_color(int32_t color_id);
     void set_mark_choose_main_color(int32_t color_id);
     void set_text_main_color(int32_t color_id);
+    void set_checkbox_main_color(int32_t color_id);
 
     void set_x_y_position(int32_t x, int32_t y);
     void set_mark_choose_on();
@@ -76,17 +84,35 @@ public:
 
 private:
     struct ButtData
-    {
+    {   
+        ButtData() {
+            name = "";
+            type = 1;
+            color_id = WHITE_COLOR;
+        }
         ButtData(string name, int32_t type, int32_t color_id) {
             this->name = name;
             this->type = type;
             this->color_id = color_id;
         }
+        ButtData(string name, int32_t type, int32_t color_id, bool is_activated) {
+            this->name = name;
+            this->type = type;
+            this->color_id = color_id;
+            this->is_activated = is_activated;
+        }
         ~ButtData() {}
         string name = "";
         int32_t type = 1;
         int32_t color_id = WHITE_COLOR;
+        bool is_activated = false;
     };
+
+    // возможные типы кнопок меню
+    #define BUTTON 1
+    #define TEXT 0
+    #define ADVANCED_INPUT 2
+    #define CHECKBOX 3
 
     int32_t x_pos_;
     int32_t y_pos_;
@@ -104,6 +130,7 @@ private:
     int32_t info_color_;
     int32_t mark_choose_color_;
     int32_t text_color_;
+    int32_t checkbox_color_;
 
     vector<ButtData> buttons_data_vector_;
     string info_;

@@ -10,11 +10,6 @@
 #define DOWN_POINTER_BUT 80
 #define UP_POINTER_BUT 72
 
-// возможные типы кнопок меню
-#define BUTTON 1
-#define TEXT 0
-#define ADVANCED_INPUT 2
-
 EasyMenu::EasyMenu() {
     pointer_ = 0;
     last_pointer_ = -1;
@@ -29,6 +24,7 @@ EasyMenu::EasyMenu() {
     info_color_ = DARK_GRAY_COLOR;
     mark_choose_color_ = GREEN_COLOR;
     text_color_ = DARK_GRAY_COLOR;
+    checkbox_color_ = WHITE_COLOR;
     info_ = "";
     is_info_full_ = false;
     mark_choose_ = false;
@@ -122,12 +118,41 @@ int32_t EasyMenu::easy_run_background() {
             }
             else if (byte_system_ == BYTE_SYSTEM_IS_ONEBYTE) {
                 if (kb_numb_ == ENTER_BUT) {
-                    clear_console();
-                    return pointer_;
+                    if (buttons_data_vector_[get_pointer_index(pointer_)].type == BUTTON) {
+                        clear_console();
+                        return pointer_;
+                    }
+                    else if (buttons_data_vector_[get_pointer_index(pointer_)].type == CHECKBOX) {
+                        buttons_data_vector_[get_pointer_index(pointer_)].is_activated = !buttons_data_vector_[get_pointer_index(pointer_)].is_activated;
+                        go_to_xy(x_pos_ + (is_pointer_on_ == true) ? 3 : 0, y_pos_ + get_pointer_index(pointer_));
+                        if (buttons_data_vector_[get_pointer_index(pointer_)].is_activated == true) {
+                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREEN_COLOR);
+                            std::cout << "[#] ";
+                        }
+                        else {
+                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                            std::cout << "[ ] ";
+                        }
+                        go_to_xy(x_pos_ + (is_pointer_on_ == true) ? 3 : 0, y_pos_ + get_pointer_index(pointer_));
+                        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
+                        std::cout.flush();
+                        go_to_xy(x_pos_ + (is_pointer_on_ == true) ? 3 : 0, y_pos_ + get_pointer_index(pointer_));
+                    }
                 }
             }
         }
         else Sleep(5);
+        if (is_need_screen_update_ == true) {
+            clear_console();
+            display_menu();
+            display_pointer();
+            is_need_screen_update_ = false;
+            is_need_pointer_update_ = false;
+        }
+        else if (is_need_pointer_update_ == true) {
+            update_pointer();
+            is_need_pointer_update_ = false;
+        }
     }
 }
 
@@ -153,13 +178,36 @@ void EasyMenu::display_menu() {
     for (int32_t i = 0; i < count_of_lines_; i++) {
         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[i].color_id);
         go_to_xy(x_pos_, y_pos_ + is_info_full_ + i);
-        if (buttons_data_vector_[i].type == BUTTON) {
+        switch (buttons_data_vector_[i].type)
+        {
+        case BUTTON:
             if (is_pointer_on_)
                 std::cout << "   ";
             std::cout << '[' << buttons_data_vector_[i].name << ']';
-        } 
-        else 
+            break;
+            /*
+        case ADVANCED_INPUT:
+
+            break;
+            */
+        case CHECKBOX:
+            if (is_pointer_on_)
+                std::cout << "   ";
+            if (buttons_data_vector_[i].is_activated == true) {
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREEN_COLOR);
+                std::cout << "[#] ";
+            }
+            else {
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                std::cout << "[ ] ";    
+            }
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[i].color_id);
             std::cout << buttons_data_vector_[i].name;
+            break;
+        default:
+            std::cout << buttons_data_vector_[i].name;
+            break;
+        }
     }
     std::cout.flush(); // очищаем буфер
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
@@ -178,19 +226,51 @@ void EasyMenu::display_pointer() {
     if (is_pointer_on_) {
         std::cout << "-->";
         if (mark_choose_) {
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
-            std::cout << '[';
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mark_choose_color_);
-            std::cout << buttons_data_vector_[get_pointer_index(pointer_)].name;
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
-            std::cout << ']';
-            go_to_xy(x_pos_ + 3, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
+            switch (buttons_data_vector_[get_pointer_index(pointer_)].type)
+            {
+                /*
+            case ADVANCED_INPUT:
+
+                break;
+                */
+            case CHECKBOX:
+                go_to_xy(x_pos_ + 3 + 4, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREEN_COLOR);
+                std::cout << buttons_data_vector_[get_pointer_index(pointer_)].name;
+                go_to_xy(x_pos_ + 3, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
+                break;
+            default:
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
+                std::cout << '[';
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mark_choose_color_);
+                std::cout << buttons_data_vector_[get_pointer_index(pointer_)].name;
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
+                std::cout << ']';
+                go_to_xy(x_pos_ + 3, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
+                break;
+            }
         }
     }
     else {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mark_choose_color_);
-        std::cout << '[' << buttons_data_vector_[get_pointer_index(pointer_)].name << ']';
-        go_to_xy(x_pos_, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
+        switch (buttons_data_vector_[get_pointer_index(pointer_)].type)
+        {
+            /*
+        case ADVANCED_INPUT:
+
+            break;
+            */
+        case CHECKBOX:
+            go_to_xy(x_pos_ + 4, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREEN_COLOR);
+            std::cout << buttons_data_vector_[get_pointer_index(pointer_)].name;
+            go_to_xy(x_pos_, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
+            break;
+        default:
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mark_choose_color_);
+            std::cout << '[' << buttons_data_vector_[get_pointer_index(pointer_)].name << ']';
+            go_to_xy(x_pos_, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
+            break;
+        }
     }
     last_pointer_ = pointer_;
     std::cout.flush(); // очищаем буфер
@@ -202,13 +282,43 @@ void EasyMenu::update_pointer() {
     if (is_pointer_on_) {
         std::cout << "   ";
         if (mark_choose_) {
-            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[get_pointer_index(last_pointer_)].color_id);
-            std::cout << '[' << buttons_data_vector_[get_pointer_index(last_pointer_)].name << ']';
+            switch (buttons_data_vector_[get_pointer_index(last_pointer_)].type)
+            {
+                /*
+            case ADVANCED_INPUT:
+
+                break;
+                */
+            case CHECKBOX:
+                go_to_xy(x_pos_ + 3 + 4, y_pos_ + get_pointer_index(last_pointer_) + is_info_full_);
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[get_pointer_index(last_pointer_)].color_id);
+                std::cout << buttons_data_vector_[get_pointer_index(last_pointer_)].name;
+                break;
+            default:
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[get_pointer_index(last_pointer_)].color_id);
+                std::cout << '[' << buttons_data_vector_[get_pointer_index(last_pointer_)].name << ']';
+                break;
+            }
         }
     }
     else {
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[get_pointer_index(last_pointer_)].color_id);
-        std::cout << '[' << buttons_data_vector_[get_pointer_index(last_pointer_)].name << ']';
+        switch (buttons_data_vector_[get_pointer_index(last_pointer_)].type)
+        {
+            /*
+        case ADVANCED_INPUT:
+
+            break;
+            */
+        case CHECKBOX:
+            go_to_xy(x_pos_ + 4, y_pos_ + get_pointer_index(last_pointer_) + is_info_full_);
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[get_pointer_index(last_pointer_)].color_id);
+            std::cout << buttons_data_vector_[get_pointer_index(last_pointer_)].name;
+            break;
+        default:
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[get_pointer_index(last_pointer_)].color_id);
+            std::cout << '[' << buttons_data_vector_[get_pointer_index(last_pointer_)].name << ']';
+            break;
+        }
     }
     std::cout.flush(); // чтобы не было отставания (очищаем буфер)
     display_pointer();  
@@ -275,6 +385,20 @@ void EasyMenu::push_back_text(string text) {
     is_need_screen_update_ = true;
 }
 
+void EasyMenu::push_back_checkbox(string text) {
+    count_of_buttons_++;
+    count_of_lines_++;
+    buttons_data_vector_.push_back(ButtData(text, CHECKBOX, checkbox_color_));
+    is_need_screen_update_ = true;
+}
+
+void EasyMenu::push_back_checkbox(string text, bool is_activated) {
+    count_of_buttons_++;
+    count_of_lines_++;
+    buttons_data_vector_.push_back(ButtData(text, CHECKBOX, checkbox_color_, is_activated));
+    is_need_screen_update_ = true;
+}
+
 void EasyMenu::insert_butt(int32_t prev_index, string butt_name) {
     if (prev_index < -1)
         prev_index = -1;
@@ -289,6 +413,24 @@ void EasyMenu::insert_text(int32_t prev_index, string text) {
         prev_index = -1;
     count_of_lines_++;
     buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index + 1, ButtData(text, TEXT, text_color_));
+    is_need_screen_update_ = true;
+}
+
+void EasyMenu::insert_checkbox(int32_t prev_index, string text) {
+    if (prev_index < -1)
+        prev_index = -1;
+    count_of_buttons_++;
+    count_of_lines_++;
+    buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index + 1, ButtData(text, CHECKBOX, checkbox_color_));
+    is_need_screen_update_ = true;
+}
+
+void EasyMenu::insert_checkbox(int32_t prev_index, string text, bool is_activated) {
+    if (prev_index < -1)
+        prev_index = -1;
+    count_of_buttons_++;
+    count_of_lines_++;
+    buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index + 1, ButtData(text, CHECKBOX, checkbox_color_, is_activated));
     is_need_screen_update_ = true;
 }
 
@@ -338,6 +480,13 @@ void EasyMenu::set_pointer_main_color(int32_t color_id) {
     if (color_id > 15 || color_id < 0)
         return;
     pointer_color_ = color_id;
+    is_need_screen_update_ = true;
+}
+
+void EasyMenu::set_checkbox_main_color(int32_t color_id) {
+    if (color_id > 15 || color_id < 0)
+        return;
+    checkbox_color_ = color_id;
     is_need_screen_update_ = true;
 }
 
