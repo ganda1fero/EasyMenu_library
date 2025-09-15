@@ -466,35 +466,38 @@ void EasyMenu::set_color(int32_t index, int32_t color_id) {
             break;
         }
     buttons_data_vector_[index].color_id = color_id;
+    is_need_screen_update_ = true;
     return;
+}
+
+int32_t EasyMenu::get_color(int32_t index) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return -1;
+    return buttons_data_vector_[index].color_id;
 }
 
 void EasyMenu::set_buttons_main_color(int32_t color_id) {
     if (color_id > 15 || color_id < 0)
         return;
     butt_color_ = color_id;
-    is_need_screen_update_ = true;
 }
 
 void EasyMenu::set_pointer_main_color(int32_t color_id) {
     if (color_id > 15 || color_id < 0)
         return;
     pointer_color_ = color_id;
-    is_need_screen_update_ = true;
 }
 
 void EasyMenu::set_checkbox_main_color(int32_t color_id) {
     if (color_id > 15 || color_id < 0)
         return;
     checkbox_color_ = color_id;
-    is_need_screen_update_ = true;
 }
 
 void EasyMenu::set_info(string new_info) {
     info_ = new_info;
     if (new_info.length() > 0)
         is_info_full_ = true;
-    is_need_screen_update_ = true;
 }
 
 void EasyMenu::delete_info() {
@@ -520,6 +523,10 @@ void EasyMenu::set_mark_choose_off() {
     if (mark_choose_)
         is_need_screen_update_ = true;
     mark_choose_ = false;
+}
+
+bool EasyMenu::get_mark_choose_status() {
+    return mark_choose_;
 }
 
 void EasyMenu::set_mark_choose_main_color(int32_t color_id) {
@@ -597,8 +604,12 @@ void EasyMenu::set_pointer_off() {
     is_pointer_on_ = false;
 }
 
+bool EasyMenu::get_pointer_status() {
+    return is_pointer_on_;
+}
+
 void EasyMenu::advanced_tick() {
-    if (is_need_screen_update_) {
+    if (is_need_screen_update_ == true) {
         clear_console();
         if (count_of_buttons_ <= 0) {
             is_need_pointer_update_ = false;
@@ -606,6 +617,10 @@ void EasyMenu::advanced_tick() {
         }
         display_menu();
         display_pointer();
+        is_need_pointer_update_ = false;
+    }
+    if (is_need_pointer_update_ == true) {
+        update_pointer();
         is_need_pointer_update_ = false;
     }
     if (keyboard_check(&byte_system_, &kb_numb_)) {
@@ -653,6 +668,10 @@ void EasyMenu::advanced_optimization_on() {
 
 void EasyMenu::advanced_optimization_off() {
     advanced_optimization_ = false;
+}
+
+bool EasyMenu::get_optimization_status() {
+    return advanced_optimization_;
 }
 
 void EasyMenu::set_x_y_position(int32_t x, int32_t y) {
