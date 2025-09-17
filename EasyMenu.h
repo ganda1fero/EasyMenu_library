@@ -74,6 +74,10 @@ public:
     bool get_mark_choose_status();
     bool get_pointer_status();
     bool get_optimization_status();
+    bool get_checkbox_status(int32_t index);
+
+    bool is_checkbox(int32_t index);
+ 
 
     EasyMenu();
     EasyMenu(string first_butt);

@@ -400,28 +400,40 @@ void EasyMenu::push_back_checkbox(string text, bool is_activated) {
 }
 
 void EasyMenu::insert_butt(int32_t prev_index, string butt_name) {
-    if (prev_index < -1)
-        prev_index = -1;
+    if (prev_index <= -1) {
+        prev_index = 0;
+        buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index, ButtData(butt_name, BUTTON, butt_color_));
+    }
+    else {
+        buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index + 1, ButtData(butt_name, BUTTON, butt_color_));
+    }
     count_of_buttons_++;
     count_of_lines_++;
-    buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index + 1, ButtData(butt_name, BUTTON, butt_color_));
     is_need_screen_update_ = true;
 }
 
 void EasyMenu::insert_text(int32_t prev_index, string text) {
-    if (prev_index < -1)
-        prev_index = -1;
+    if (prev_index <= -1) {
+        prev_index = 0;
+        buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index, ButtData(text, TEXT, text_color_));
+    }
+    else {
+        buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index + 1, ButtData(text, TEXT, text_color_));
+    }
     count_of_lines_++;
-    buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index + 1, ButtData(text, TEXT, text_color_));
     is_need_screen_update_ = true;
 }
 
 void EasyMenu::insert_checkbox(int32_t prev_index, string text) {
-    if (prev_index < -1)
-        prev_index = -1;
+    if (prev_index <= -1) {
+        prev_index = 0;
+        buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index, ButtData(text, CHECKBOX, checkbox_color_));
+    }
+    else {
+        buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index + 1, ButtData(text, CHECKBOX, checkbox_color_));
+    }
     count_of_buttons_++;
     count_of_lines_++;
-    buttons_data_vector_.insert(buttons_data_vector_.begin() + prev_index + 1, ButtData(text, CHECKBOX, checkbox_color_));
     is_need_screen_update_ = true;
 }
 
@@ -672,6 +684,22 @@ void EasyMenu::advanced_optimization_off() {
 
 bool EasyMenu::get_optimization_status() {
     return advanced_optimization_;
+}
+
+bool EasyMenu::get_checkbox_status(int32_t index) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return false;
+    if (buttons_data_vector_[index].type == CHECKBOX)
+        return buttons_data_vector_[index].is_activated;
+    return false;
+}
+
+bool EasyMenu::is_checkbox(int32_t index) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return false;
+    if (buttons_data_vector_[index].type == CHECKBOX)
+        return true;
+    return false;
 }
 
 void EasyMenu::set_x_y_position(int32_t x, int32_t y) {
