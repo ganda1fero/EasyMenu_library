@@ -48,15 +48,18 @@ public:
     void insert_checkbox(int32_t prev_index, string text);
     void insert_checkbox(int32_t prev_index, string text, bool is_activated);
 
-    void edit(int index, string new_text);
+    void edit(int32_t index, string new_text);
 
     void pop_back();
-    void delete_butt(int index);
+    void delete_butt(int32_t index);
     void delete_all_text();
+    void delete_notification(int32_t index);
     void set_info(string new_info);
+    void set_notification(int32_t index, string new_notification);
     void delete_info();
 
     void set_color(int32_t index, int32_t color_id);
+    void set_notification_color(int32_t index, int32_t color_id);
     void set_buttons_main_color(int32_t color_id);
     void set_pointer_main_color(int32_t color_id);
     void set_info_main_color(int32_t color_id);
@@ -67,6 +70,7 @@ public:
     void set_x_y_position(int32_t x, int32_t y);
     void set_mark_choose_on();
     void set_mark_choose_off();
+    void set_new_pointer(string new_pointer);
     void set_pointer_off();
     void set_pointer_on();
 
@@ -75,6 +79,7 @@ public:
     bool get_pointer_status();
     bool get_optimization_status();
     bool get_checkbox_status(int32_t index);
+    std::vector<bool> get_all_checkbox_status();
 
     bool is_checkbox(int32_t index);
  
@@ -96,24 +101,32 @@ private:
     {   
         ButtData() {
             name = "";
+            notification = "";
             type = 1;
             color_id = WHITE_COLOR;
+            notification_color_id = YELLOW_COLOR;
         }
         ButtData(string name, int32_t type, int32_t color_id) {
             this->name = name;
             this->type = type;
             this->color_id = color_id;
+            notification = "";
+            notification_color_id = YELLOW_COLOR;
         }
         ButtData(string name, int32_t type, int32_t color_id, bool is_activated) {
             this->name = name;
             this->type = type;
             this->color_id = color_id;
             this->is_activated = is_activated;
+            notification = "";
+            notification_color_id = YELLOW_COLOR;
         }
         ~ButtData() {}
         string name = "";
+        string notification = "";
         int32_t type = 1;
         int32_t color_id = WHITE_COLOR;
+        int32_t notification_color_id = YELLOW_COLOR;
         bool is_activated = false;
     };
 
@@ -143,6 +156,9 @@ private:
 
     vector<ButtData> buttons_data_vector_;
     string info_;
+
+    string pointer_str_;
+    string pointer_space_;  // для увеличения производительности
 
     bool is_info_full_;
     bool mark_choose_;

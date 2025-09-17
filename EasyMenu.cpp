@@ -12,6 +12,8 @@
 
 EasyMenu::EasyMenu() {
     pointer_ = 0;
+    pointer_str_ = "-->";
+    pointer_space_ = "   ";
     last_pointer_ = -1;
     x_pos_ = 0;
     y_pos_ = 0;
@@ -124,7 +126,7 @@ int32_t EasyMenu::easy_run_background() {
                     }
                     else if (buttons_data_vector_[get_pointer_index(pointer_)].type == CHECKBOX) {
                         buttons_data_vector_[get_pointer_index(pointer_)].is_activated = !buttons_data_vector_[get_pointer_index(pointer_)].is_activated;
-                        go_to_xy(x_pos_ + (is_pointer_on_ == true) ? 3 : 0, y_pos_ + get_pointer_index(pointer_));
+                        go_to_xy(x_pos_ + (is_pointer_on_ == true) ? pointer_str_.length() : 0, y_pos_ + get_pointer_index(pointer_));
                         if (buttons_data_vector_[get_pointer_index(pointer_)].is_activated == true) {
                             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREEN_COLOR);
                             std::cout << "[#] ";
@@ -133,10 +135,10 @@ int32_t EasyMenu::easy_run_background() {
                             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
                             std::cout << "[ ] ";
                         }
-                        go_to_xy(x_pos_ + (is_pointer_on_ == true) ? 3 : 0, y_pos_ + get_pointer_index(pointer_));
+                        go_to_xy(x_pos_ + (is_pointer_on_ == true) ? pointer_str_.length() : 0, y_pos_ + get_pointer_index(pointer_));
                         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
                         std::cout.flush();
-                        go_to_xy(x_pos_ + (is_pointer_on_ == true) ? 3 : 0, y_pos_ + get_pointer_index(pointer_));
+                        go_to_xy(x_pos_ + (is_pointer_on_ == true) ? pointer_str_.length() : 0, y_pos_ + get_pointer_index(pointer_));
                     }
                 }
             }
@@ -182,8 +184,12 @@ void EasyMenu::display_menu() {
         {
         case BUTTON:
             if (is_pointer_on_)
-                std::cout << "   ";
+                std::cout << pointer_space_;
             std::cout << '[' << buttons_data_vector_[i].name << ']';
+            if (buttons_data_vector_[i].notification.length() > 0) { // выводим уведомление
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[i].notification_color_id);
+                std::cout << "  " << buttons_data_vector_[i].notification;
+            }
             break;
             /*
         case ADVANCED_INPUT:
@@ -192,7 +198,7 @@ void EasyMenu::display_menu() {
             */
         case CHECKBOX:
             if (is_pointer_on_)
-                std::cout << "   ";
+                std::cout << pointer_space_;
             if (buttons_data_vector_[i].is_activated == true) {
                 SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREEN_COLOR);
                 std::cout << "[#] ";
@@ -203,6 +209,10 @@ void EasyMenu::display_menu() {
             }
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[i].color_id);
             std::cout << buttons_data_vector_[i].name;
+            if (buttons_data_vector_[i].notification.length() > 0) {
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[i].notification_color_id);
+                std::cout << "  " << buttons_data_vector_[i].notification;
+            }
             break;
         default:
             std::cout << buttons_data_vector_[i].name;
@@ -224,29 +234,29 @@ void EasyMenu::display_pointer() {
     go_to_xy(x_pos_, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), pointer_color_);
     if (is_pointer_on_) {
-        std::cout << "-->";
+        std::cout << pointer_str_;
         if (mark_choose_) {
             switch (buttons_data_vector_[get_pointer_index(pointer_)].type)
             {
                 /*
             case ADVANCED_INPUT:
-
+                
                 break;
                 */
             case CHECKBOX:
-                go_to_xy(x_pos_ + 3 + 4, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
+                go_to_xy(x_pos_ + pointer_str_.length() + 4, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
                 SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREEN_COLOR);
                 std::cout << buttons_data_vector_[get_pointer_index(pointer_)].name;
-                go_to_xy(x_pos_ + 3, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
+                go_to_xy(x_pos_ + pointer_str_.length(), y_pos_ + get_pointer_index(pointer_) + is_info_full_);
                 break;
             default:
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[get_pointer_index(pointer_)].color_id);
                 std::cout << '[';
                 SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), mark_choose_color_);
                 std::cout << buttons_data_vector_[get_pointer_index(pointer_)].name;
-                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), butt_color_);
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[get_pointer_index(pointer_)].color_id);
                 std::cout << ']';
-                go_to_xy(x_pos_ + 3, y_pos_ + get_pointer_index(pointer_) + is_info_full_);
+                go_to_xy(x_pos_ + pointer_str_.length(), y_pos_ + get_pointer_index(pointer_) + is_info_full_);
                 break;
             }
         }
@@ -280,7 +290,7 @@ void EasyMenu::display_pointer() {
 void EasyMenu::update_pointer() {
     go_to_xy(x_pos_, y_pos_ + get_pointer_index(last_pointer_) + is_info_full_);
     if (is_pointer_on_) {
-        std::cout << "   ";
+        std::cout << pointer_space_;
         if (mark_choose_) {
             switch (buttons_data_vector_[get_pointer_index(last_pointer_)].type)
             {
@@ -290,7 +300,7 @@ void EasyMenu::update_pointer() {
                 break;
                 */
             case CHECKBOX:
-                go_to_xy(x_pos_ + 3 + 4, y_pos_ + get_pointer_index(last_pointer_) + is_info_full_);
+                go_to_xy(x_pos_ + pointer_str_.length() + 4, y_pos_ + get_pointer_index(last_pointer_) + is_info_full_);
                 SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), buttons_data_vector_[get_pointer_index(last_pointer_)].color_id);
                 std::cout << buttons_data_vector_[get_pointer_index(last_pointer_)].name;
                 break;
@@ -482,6 +492,15 @@ void EasyMenu::set_color(int32_t index, int32_t color_id) {
     return;
 }
 
+void EasyMenu::set_notification_color(int32_t index, int32_t color_id) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return;
+    if (color_id < 0 || color_id > 15)
+        return;
+    buttons_data_vector_[index].notification_color_id = color_id;
+    return;
+}
+
 int32_t EasyMenu::get_color(int32_t index) {
     if (index < 0 || index > count_of_lines_ - 1)
         return -1;
@@ -512,10 +531,24 @@ void EasyMenu::set_info(string new_info) {
         is_info_full_ = true;
 }
 
+void EasyMenu::set_notification(int32_t index, string new_notification) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return;
+    buttons_data_vector_[index].notification = new_notification;
+    return;
+}
+
 void EasyMenu::delete_info() {
     if (is_info_full_)
         is_need_screen_update_ = true;
     is_info_full_ = false;
+}
+
+void EasyMenu::delete_notification(int32_t index) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return;
+    buttons_data_vector_[index].notification.clear(); 
+    return;
 }
 
 void EasyMenu::set_info_main_color(int32_t color_id) {
@@ -555,7 +588,7 @@ void EasyMenu::set_text_main_color(int32_t color_id) {
     is_need_screen_update_ = true;
 }
 
-void EasyMenu::edit(int index, string new_text) {
+void EasyMenu::edit(int32_t index, string new_text) {
     if (index >= 0 && index < count_of_lines_) {
         buttons_data_vector_[index].name = new_text;
         is_need_screen_update_ = true;
@@ -564,7 +597,7 @@ void EasyMenu::edit(int index, string new_text) {
     return;
 }
 
-void EasyMenu::delete_butt(int index) {
+void EasyMenu::delete_butt(int32_t index) {
     if (index >= 0 && index < count_of_lines_) {
         bool wasButton = (buttons_data_vector_[index].type != TEXT);
         buttons_data_vector_.erase(buttons_data_vector_.begin() + index);
@@ -614,6 +647,17 @@ void EasyMenu::set_pointer_off() {
     if (is_pointer_on_)
         is_need_screen_update_ = true;
     is_pointer_on_ = false;
+}
+
+void EasyMenu::set_new_pointer(string new_pointer) {
+    if (new_pointer.length() == 0 || new_pointer.length() > 5)
+        return;
+    pointer_str_ = new_pointer;
+    pointer_space_ = "";
+    for (int i{ 0 }; i < pointer_str_.length(); i++)
+        pointer_space_.push_back(' ');  // заполняем новый pointer_space_
+    is_need_screen_update_ = true;
+    return;
 }
 
 bool EasyMenu::get_pointer_status() {
@@ -694,6 +738,28 @@ bool EasyMenu::get_checkbox_status(int32_t index) {
     return false;
 }
 
+std::vector<bool> EasyMenu::get_all_checkbox_status() {
+    std::vector<bool> tmp_vector;
+    tmp_vector.reserve(count_of_buttons_);  // просто на всякий резервируем для ускорения (при больше 1 чекбоксе)
+    for (int i{ 0 }; i < count_of_lines_; i++)
+        if (buttons_data_vector_[i].type == CHECKBOX)
+            tmp_vector.push_back(buttons_data_vector_[i].is_activated);
+    return tmp_vector;
+}
+
+int32_t EasyMenu::get_pointer_index(int32_t pointer_) {
+    if (count_of_buttons_ == count_of_lines_)
+        return pointer_;
+    int32_t tmp{ -1 };
+    for (int i{ 0 }; i < count_of_lines_; i++) {
+        if (buttons_data_vector_[i].type != TEXT)
+            tmp++;
+        if (tmp == pointer_)
+            return i;   // возвращаем нужный индекс 
+    }
+    return NULL;
+}
+
 bool EasyMenu::is_checkbox(int32_t index) {
     if (index < 0 || index > count_of_lines_ - 1)
         return false;
@@ -709,17 +775,4 @@ void EasyMenu::set_x_y_position(int32_t x, int32_t y) {
         y = 0;
     x_pos_ = x;
     y_pos_ = y;
-}
-
-int32_t EasyMenu::get_pointer_index(int32_t pointer_) {
-    if (count_of_buttons_ == count_of_lines_)
-        return pointer_;
-    int32_t tmp{ -1 };
-    for (int i{ 0 }; i < count_of_lines_; i++) {
-        if (buttons_data_vector_[i].type != TEXT)
-            tmp++;
-        if (tmp == pointer_)
-            return i;   // возвращаем нужный индекс 
-    }
-    return NULL;
 }
