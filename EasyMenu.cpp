@@ -645,6 +645,22 @@ void EasyMenu::set_advanced_cin_max_input_length(int32_t index, int32_t max_leng
     return;
 }
 
+void EasyMenu::set_advanced_cin_new_allowed_chars(int32_t index, std::vector<char> new_chars) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return;
+    if (buttons_data_vector_[index].type == ADVANCED_INPUT)
+        buttons_data_vector_[index].advanced_cin.set_new_allowed_chars(new_chars);
+    return;
+}
+
+void EasyMenu::set_advanced_cin_new_allowed_chars(int32_t index, std::string new_chars) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return;
+    if (buttons_data_vector_[index].type == ADVANCED_INPUT)
+        buttons_data_vector_[index].advanced_cin.set_new_allowed_chars(new_chars);
+    return;
+}
+
 void EasyMenu::set_info(string new_info) {
     info_ = new_info;
     if (new_info.length() > 0)
@@ -668,6 +684,12 @@ void EasyMenu::delete_notification(int32_t index) {
     if (index < 0 || index > count_of_lines_ - 1)
         return;
     buttons_data_vector_[index].notification.clear(); 
+    return;
+}
+
+void EasyMenu::delete_all_notifications() {
+    for (int i{ 0 }; i < buttons_data_vector_.size(); i++)
+        buttons_data_vector_[i].notification.clear();
     return;
 }
 
@@ -903,6 +925,23 @@ std::vector<bool> EasyMenu::get_all_checkbox_status() {
     return tmp_vector;
 }
 
+std::string EasyMenu::get_advanced_cin_input(int32_t index) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return "";
+    if (buttons_data_vector_[index].type == ADVANCED_INPUT)
+        return buttons_data_vector_[index].advanced_cin.buffer_;
+    return "";
+}
+
+std::vector<std::string> EasyMenu::get_all_advacned_cin_input() {
+    std::vector<std::string> tmp_vector;
+    tmp_vector.reserve(count_of_buttons_);
+    for (int i{ 0 }; i < count_of_lines_; i++)
+        if (buttons_data_vector_[i].type == ADVANCED_INPUT)
+            tmp_vector.push_back(buttons_data_vector_[i].advanced_cin.buffer_);
+    return tmp_vector;
+}
+
 int32_t EasyMenu::get_pointer_index(int32_t pointer_) {
     if (count_of_buttons_ == count_of_lines_)
         return pointer_;
@@ -924,6 +963,35 @@ bool EasyMenu::is_checkbox(int32_t index) {
     return false;
 }
 
+bool EasyMenu::is_advanced_cin(int32_t index) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return false;
+    if (buttons_data_vector_[index].type == ADVANCED_INPUT)
+        return true;
+    return false;
+}
+
+bool EasyMenu::is_advanced_cin_correct(int32_t index) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return false;
+    if (buttons_data_vector_[index].type == ADVANCED_INPUT)
+        return ((buttons_data_vector_[index].advanced_cin.count_of_mistakes > 0) ? false : true);
+    return false;
+}
+
+bool EasyMenu::is_all_advanced_cin_correct() {
+    int32_t count_of_advanecd_cin{ 0 };
+    for (int i{ 0 }; i < count_of_lines_; i++)
+        if (buttons_data_vector_[i].type == ADVANCED_INPUT) {
+            if (buttons_data_vector_[i].advanced_cin.count_of_mistakes > 0)
+                return false;
+            count_of_advanecd_cin++;
+        }
+    if (count_of_advanecd_cin == 0)
+        return false;
+    return true;
+}
+
 void EasyMenu::set_x_y_position(int32_t x, int32_t y) {
     if (x < 0)
         x = 0;
@@ -937,6 +1005,7 @@ void EasyMenu::set_x_y_position(int32_t x, int32_t y) {
 
 EasyMenu::ButtData::AdvancedCIN::AdvancedCIN() {
     max_length_ = 20;
+    count_of_mistakes = 0;
     buffer_ = "";
     buffer_.reserve(max_length_ + 3);
     is_need_output_refresh_ = false;
@@ -979,6 +1048,36 @@ void EasyMenu::ButtData::AdvancedCIN::set_max_inn_length(int32_t new_max_length)
     if (max_length_ < 1 || max_length_ > 50)
         return;
     max_length_ = new_max_length;
+    return;
+}
+
+void EasyMenu::ButtData::AdvancedCIN::set_new_allowed_chars(std::vector<char> new_allowed_vector) {
+    allowed_char_vector_ = new_allowed_vector;
+    std::sort(allowed_char_vector_.begin(), allowed_char_vector_.end());
+    
+    if (buffer_.length() > 0) { // перепроверяем на ошибки
+        count_of_mistakes = 0;
+        for (int i{ 0 }; i < buffer_.length(); i++) {
+            if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), buffer_[i]) == false)
+                count_of_mistakes++;
+        }
+    }
+    return;
+}
+
+void EasyMenu::ButtData::AdvancedCIN::set_new_allowed_chars(std::string new_allowed_chars) {
+    allowed_char_vector_.clear();
+    for (int i{ 0 }; i < new_allowed_chars.length(); i++)
+        allowed_char_vector_.push_back(new_allowed_chars[i]);
+    std::sort(allowed_char_vector_.begin(), allowed_char_vector_.end());
+
+    if (buffer_.length() > 0) { // перепроверяем на ошибки
+        count_of_mistakes = 0;
+        for (int i{ 0 }; i < buffer_.length(); i++) {
+            if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), buffer_[i]) == false)
+                count_of_mistakes++;
+        }
+    }
     return;
 }
 
@@ -1120,6 +1219,8 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                 case BACKSPACE_BUT: // удаляем 
                     if (buffer_.length() > 0) { // => есть что удалять
                         if (inn_pointer == buffer_.length()) {  // удаляем с конца
+                            if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), buffer_[inn_pointer - 1]) == false)
+                                count_of_mistakes--; // значит удалили ошибочный ввод
                             buffer_.pop_back();
                             // внешняя часть
                             std::cout << '\b' << ' ' << '\b';
@@ -1127,6 +1228,8 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                             inn_pointer--;
                         }
                         else if(inn_pointer > 0) { // удаляем не с конца и не в начале
+                            if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), buffer_[inn_pointer - 1]) == false)
+                                count_of_mistakes--; // значит удалили ошибочный ввод
                             buffer_.erase(buffer_.begin() + inn_pointer - 1);
                             // внешняя часть
                             std::cout << '\b';
@@ -1237,6 +1340,7 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                         inn_pointer++;
                                         owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
                                     }
+                                    count_of_mistakes++;
                                 }
                                 std::cout.flush(); // моментальное изменение cout с освобождением буфера
                             }

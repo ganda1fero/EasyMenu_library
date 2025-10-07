@@ -46,12 +46,12 @@ public:
     void push_back_advanced_cin(string name);
     void push_back_advanced_cin(string name, string original_text);
 
-    void insert_butt(int32_t prev_index, string butt_name);
-    void insert_text(int32_t prev_index, string text);
-    void insert_checkbox(int32_t prev_index, string text);
-    void insert_checkbox(int32_t prev_index, string text, bool is_activated);
-    void insert_advanced_cin(int32_t prev_index, string name);
-    void insert_advanced_cin(int32_t prev_index, string name, string original_text);
+    void insert_butt(int32_t index, string butt_name);
+    void insert_text(int32_t index, string text);
+    void insert_checkbox(int32_t index, string text);
+    void insert_checkbox(int32_t index, string text, bool is_activated);
+    void insert_advanced_cin(int32_t index, string name);
+    void insert_advanced_cin(int32_t index, string name, string original_text);
 
     void edit(int32_t index, string new_text);
 
@@ -59,6 +59,7 @@ public:
     void delete_butt(int32_t index);
     void delete_all_text();
     void delete_notification(int32_t index);
+    void delete_all_notifications();
     void set_info(string new_info);
     void set_notification(int32_t index, string new_notification);
     void delete_info();
@@ -74,6 +75,8 @@ public:
     void set_advanced_cin_correct_color(int32_t color_id);
     void set_advanced_cin_uncorrect_color(int32_t color_id);
     void set_advanced_cin_max_input_length(int32_t index, int32_t max_length);
+    void set_advanced_cin_new_allowed_chars(int32_t index, std::vector<char> new_chars);
+    void set_advanced_cin_new_allowed_chars(int32_t index, std::string new_chars);
 
     void set_x_y_position(int32_t x, int32_t y);
     void set_mark_choose_on();
@@ -86,16 +89,19 @@ public:
     void set_advanced_cin_secure_input_on(int32_t index);
     void set_advanced_cin_secure_input_off(int32_t index);
 
-
     int32_t get_color(int32_t index);
     bool get_mark_choose_status();
     bool get_pointer_status();
     bool get_optimization_status();
     bool get_checkbox_status(int32_t index);
     std::vector<bool> get_all_checkbox_status();
+    std::string get_advanced_cin_input(int32_t index);
+    std::vector<string> get_all_advacned_cin_input();
 
     bool is_checkbox(int32_t index);
- 
+    bool is_advanced_cin(int32_t index);
+    bool is_advanced_cin_correct(int32_t index);
+    bool is_all_advanced_cin_correct();
 
     EasyMenu();
     EasyMenu(string first_butt);
@@ -128,6 +134,8 @@ private:
             void set_owner(EasyMenu* ptr);
             void set_text(string new_text);
             void set_max_inn_length(int32_t new_max_length);
+            void set_new_allowed_chars(std::vector<char> new_allowed_vector);
+            void set_new_allowed_chars(std::string new_allowed_chars);
 
             void ban_not_allowed_on();
             void ban_not_allowed_off();
@@ -145,6 +153,7 @@ private:
             EasyMenu* owner_ptr_;
 
             int32_t max_length_;
+            int32_t count_of_mistakes;
 
             string buffer_;
             vector<char> allowed_char_vector_;
