@@ -131,7 +131,7 @@ int32_t EasyMenu::easy_run_background() {
                     }
                     else if (buttons_data_vector_[get_pointer_index(pointer_)].type == CHECKBOX) {
                         buttons_data_vector_[get_pointer_index(pointer_)].is_activated = !buttons_data_vector_[get_pointer_index(pointer_)].is_activated;
-                        go_to_xy(x_pos_ + ((is_pointer_on_ == true) ? pointer_str_.length() : 0), y_pos_ + get_pointer_index(pointer_));
+                        go_to_xy(x_pos_ + ((is_pointer_on_ == true) ? pointer_str_.length() : 0), y_pos_ + get_pointer_index(pointer_) + is_info_full_);
                         if (buttons_data_vector_[get_pointer_index(pointer_)].is_activated == true) {
                             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), GREEN_COLOR);
                             std::cout << "[#] ";
@@ -140,10 +140,9 @@ int32_t EasyMenu::easy_run_background() {
                             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
                             std::cout << "[ ] ";
                         }
-                        go_to_xy(x_pos_ + (is_pointer_on_ == true) ? pointer_str_.length() : 0, y_pos_ + get_pointer_index(pointer_));
                         SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE_COLOR);
                         std::cout.flush();
-                        go_to_xy(x_pos_ + ((is_pointer_on_ == true) ? pointer_str_.length() : 0), y_pos_ + get_pointer_index(pointer_));
+                        go_to_xy(x_pos_ + ((is_pointer_on_ == true) ? pointer_str_.length() : 0), y_pos_ + get_pointer_index(pointer_) + is_info_full_);
                     }
                     else if (buttons_data_vector_[get_pointer_index(pointer_)].type == ADVANCED_INPUT) {
                         buttons_data_vector_[get_pointer_index(pointer_)].advanced_cin.run_cin(get_pointer_index(pointer_));
