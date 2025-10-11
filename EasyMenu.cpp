@@ -1315,7 +1315,7 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                         std::cout << tmp_char;
                                         inn_pointer++;
                                     }
-                                    else {  // вводим разрешенный не в конец
+                                    else {  // вводим неразрешенный не в конец
                                         buffer_.insert(buffer_.begin() + inn_pointer, tmp_char);
                                         for (int i{ 0 }; i < buffer_.length() - inn_pointer; i++)
                                             std::cout << ' '; // очищаем для сдвига
@@ -1326,7 +1326,10 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                                     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
                                                     is_last_correct = true;
                                                 }
-                                                std::cout << '*';
+                                                if (is_secured_ == true)
+                                                    std::cout << '*';
+                                                else
+                                                    std::cout << buffer_[i];
                                             }
                                             else {
                                                 if (is_last_correct == true) {
