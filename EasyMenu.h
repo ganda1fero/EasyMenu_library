@@ -1,6 +1,7 @@
 #ifndef EASYMENU_H
 #define EASYMENU_H
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 #include <algorithm>
