@@ -1839,6 +1839,112 @@ bool EasyMenu_Dictionary::ReadReadyData() {
     return true;
 }
 
+bool EasyMenu_Dictionary::ExportViaCSV() {
+    if (dictionary_name_.empty() || main_dict_.empty())
+        return false;
+
+    const std::string to_file = dictionary_name_ + ".csv";	// имя для итогового файла
+
+    std::ofstream file(to_file, std::ios::trunc);	// открыли в бинарном виде, удалив что было
+    if (file.is_open() == false)
+        return false; // не смогли создать файл
+
+    // записываем
+    try {
+        file << '\"' << main_dict_[0]->word << '\"' << ";\"" << main_dict_[0]->popularity << '\"';
+
+        for (uint32_t i{ 1 }; i < main_dict_.size(); i++)
+            file << '\n' << '\"' << main_dict_[i]->word << '\"' << ";\"" << main_dict_[i]->popularity << '\"';
+
+        if (!file) { // значит при записи была ошибка (битый файл!)
+            file.close();
+            std::remove(to_file.c_str());	// удаляем файл
+            return false;
+        }
+    }
+    catch (...) {
+        file.close();
+        std::remove(to_file.c_str());	// удаляем файл
+        return false;
+    }
+
+    file.close();
+
+    return true;
+}
+
+bool EasyMenu_Dictionary::ImportViaCSV() {
+    
+    return ImportViaCSV(dictionary_name_);
+}
+
+bool EasyMenu_Dictionary::ImportViaCSV(const std::string& file_name) {
+    if (dictionary_name_.empty() || file_name.empty()) // не можем прочитать - нет имени!
+        return false;
+
+    const std::string to_file = file_name + ".csv";	// имя для файла
+
+    std::ifstream file(to_file, std::ios::in);
+    if (file.is_open() == false)
+        return false; // не смогли создать файл
+
+    // подготовка к безопасному чтению
+    uint32_t tmp_max_word_length = 0;
+    bool tmp_is_need_compile = true;
+    std::vector<Dictionary_note*> tmp_main_dict;
+    try {
+        size_t sep_index;
+        std::string tmp_bufer;
+
+        // начинаем читать
+        while (std::getline(file, tmp_bufer)) {
+            sep_index = tmp_bufer.find(';');
+
+            if (sep_index == std::string::npos)
+                break;  // скорее всего данные закончились
+
+            if (tmp_bufer[sep_index + 1] != '\"' || tmp_bufer[sep_index - 1] != '\"')
+                throw;  // это ошибка формата
+            
+            if (tmp_bufer[0] != '\"' || tmp_bufer[tmp_bufer.length() - 1] != '\"')
+                throw;  // это ошибка формата
+
+            Dictionary_note* tmp_ptr = new Dictionary_note;
+            if (sep_index <= 2) throw std::runtime_error("Empty word field");
+            tmp_ptr->word = tmp_bufer.substr(1, sep_index - 2);
+            std::string number_part = tmp_bufer.substr(sep_index + 2);
+            if (number_part.back() == '"')
+                number_part.pop_back();
+            tmp_ptr->popularity = std::stoi(number_part);
+
+            tmp_main_dict.push_back(tmp_ptr);
+        }
+    }
+    catch (...) {
+        // словили какую-то ошибку
+        file.close();
+
+        for (uint32_t i{ 0 }; i < tmp_main_dict.size(); i++)
+            if (tmp_main_dict[i] != nullptr)
+                delete tmp_main_dict[i];	// очищаем если нужно
+
+        return false;
+    }
+
+    // ошибки не было - переносим данные (в основыную)
+    file.close();
+
+    DeleteData(); // очищаем всю память (особенно динамическую)
+
+    max_word_length_ = tmp_max_word_length;
+    is_need_compile_ = tmp_is_need_compile;
+    main_dict_ = tmp_main_dict; // скопировали все указатели
+
+    compile_prefix_dicts();
+
+    return true;
+}
+
 bool EasyMenu_Dictionary::GetReadyData(std::vector<char>& to_copy) {
     if (SaveReadyData() == false)	// контрольное сохранание
         return false;
@@ -2223,6 +2329,20 @@ bool EasyDict::open_via_char(std::string dictionary_name, const std::vector<char
     return false;
 }
 
+bool EasyDict::open_via_csv() {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    opened_dict_ptr_->ImportViaCSV();
+}
+
+bool EasyDict::open_via_csv(const std::string& file_name) {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    opened_dict_ptr_->ImportViaCSV(file_name);
+}
+
 bool EasyDict::create(std::string dictionary_name) {
     if (dictionary_name.empty())
         return false;
@@ -2391,6 +2511,13 @@ bool EasyDict::save_via_char(std::vector<char>& char_vector) {
         return false;
 
     return opened_dict_ptr_->GetReadyData(char_vector);
+}
+
+bool EasyDict::save_via_csv() {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    return opened_dict_ptr_->ExportViaCSV();
 }
 
 bool EasyDict::compile() {

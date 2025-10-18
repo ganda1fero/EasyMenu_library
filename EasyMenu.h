@@ -312,6 +312,10 @@ private:
     bool SaveReadyData();
     bool ReadReadyData();
 
+    bool ExportViaCSV();
+    bool ImportViaCSV();
+    bool ImportViaCSV(const std::string& file_name);
+
     bool GetReadyData(std::vector<char>& to_copy);
     bool ReadFromCharData(const std::vector<char>& data);
 
@@ -359,6 +363,8 @@ public:
 
     bool open(std::string dictionary_name);
     bool open_via_char(std::string dictionary_name, const std::vector<char>& char_vector);
+    bool open_via_csv();
+    bool open_via_csv(const std::string& file_name);
     bool create(std::string dictionary_name);
     bool create(std::string dictionary_name, std::string copying_dictionary_name);
     bool close();
@@ -370,6 +376,7 @@ public:
 
     bool save();
     bool save_via_char(std::vector<char>& char_vector);
+    bool save_via_csv();
 
     bool compile();
 
