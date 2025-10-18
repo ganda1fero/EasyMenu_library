@@ -1233,15 +1233,44 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                 case BACKSPACE_BUT: // удаляем 
                     if (buffer_.length() > 0) { // => есть что удалять
                         if (inn_pointer == buffer_.length()) {  // удаляем с конца
+                            if (last_predicted_path_.empty() == false) {
+                                // очищаем старую подсказку
+                                for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                    std::cout << ' ';
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                last_predicted_path_.clear();
+                            }
+
                             if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), buffer_[inn_pointer - 1]) == false)
                                 count_of_mistakes--; // значит удалили ошибочный ввод
                             buffer_.pop_back();
                             // внешняя часть
                             std::cout << '\b' << ' ' << '\b';
-                            std::cout.flush();
                             inn_pointer--;
+
+                            if (dictionary_ptr_ != nullptr && is_secured_ == false && dictionary_ptr_->is_open() && count_of_mistakes == 0 && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
+                                // нашли подсказку, выводим
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                                std::cout << last_predicted_path_;
+                                if (is_last_correct)
+                                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                else
+                                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                            }
+
+                            std::cout.flush();
                         }
                         else if(inn_pointer > 0) { // удаляем не с конца и не в начале
+                            if (last_predicted_path_.empty() == false) {
+                                // очищаем старую подсказку (не в конце)
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                    std::cout << ' ';
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                last_predicted_path_.clear();
+                            }
+
                             if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), buffer_[inn_pointer - 1]) == false)
                                 count_of_mistakes--; // значит удалили ошибочный ввод
                             buffer_.erase(buffer_.begin() + inn_pointer - 1);
@@ -1270,6 +1299,17 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                 }
                             }
                             inn_pointer--;
+
+                            if (dictionary_ptr_ != nullptr && is_secured_ == false && dictionary_ptr_->is_open() && count_of_mistakes == 0 && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
+                                // нашли подсказку, выводим (не в конце)
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                                std::cout << last_predicted_path_;
+                                if (is_last_correct)
+                                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                else
+                                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                            }
+
                             owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
                             std::cout.flush();
                         }
@@ -1300,18 +1340,24 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                             std::cout << tmp_char;
                                         inn_pointer++;
 
-                                        if (dictionary_ptr_ != nullptr && dictionary_ptr_->is_open() && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
+                                        if (dictionary_ptr_ != nullptr && is_secured_ == false && dictionary_ptr_->is_open() && count_of_mistakes == 0 && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
                                             // нашли подсказку, выводим
                                             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
                                             std::cout << last_predicted_path_;
-                                            if (is_last_correct) 
-                                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
-                                            else
-                                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
                                             owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
                                         }
                                     }
                                     else {  // вводим разрешенный не в конец
+                                        if (last_predicted_path_.empty() == false) {
+                                            // очищаем старую подсказку (не в конце)
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                                std::cout << ' ';
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            last_predicted_path_.clear();
+                                        }
+
                                         buffer_.insert(buffer_.begin() + inn_pointer, tmp_char);
                                         for (int i{ 0 }; i < buffer_.length() - inn_pointer; i++)
                                             std::cout << ' '; // очищаем для сдвига
@@ -1336,6 +1382,14 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                             }
                                         }
                                         inn_pointer++;
+
+                                        if (dictionary_ptr_ != nullptr && is_secured_ == false && dictionary_ptr_->is_open() && count_of_mistakes == 0 && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
+                                            // нашли подсказку, выводим (не в конце)
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                                            std::cout << last_predicted_path_;
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                        }
+
                                         owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
                                     }
                                 }
@@ -1345,11 +1399,28 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                         is_last_correct = false;
                                     }   // меняем цвет дл вывода на будущее (если не был нужный)
                                     if (inn_pointer == buffer_.length()) { // вводим неразрешенный в конец
+                                        if (last_predicted_path_.empty() == false) {
+                                            // очищаем старую подсказку
+                                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                                std::cout << ' ';
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            last_predicted_path_.clear();
+                                        }
+
                                         buffer_.push_back(tmp_char);
                                         std::cout << tmp_char;
                                         inn_pointer++;
                                     }
                                     else {  // вводим неразрешенный не в конец
+                                        if (last_predicted_path_.empty() == false) {
+                                            // очищаем старую подсказку (не в конце)
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                                std::cout << ' ';
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            last_predicted_path_.clear();
+                                        }
+
                                         buffer_.insert(buffer_.begin() + inn_pointer, tmp_char);
                                         for (int i{ 0 }; i < buffer_.length() - inn_pointer; i++)
                                             std::cout << ' '; // очищаем для сдвига
@@ -1379,6 +1450,76 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                     count_of_mistakes++;
                                 }
                                 std::cout.flush(); // моментальное изменение cout с освобождением буфера
+                            }
+                        }
+                    }
+                    else {  // => был нажат TAB
+                        if (last_predicted_path_.empty() == false && is_secured_ == false && count_of_mistakes == 0) {
+                            // довводим (до макс длины!)
+                            int can_write_tmp = max_length_ - buffer_.length(); // получили возможное количество символов
+
+                            if (last_predicted_path_.length() <= can_write_tmp) { // можем ввести целиком
+                                // перемещаем указатель на конец слова
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                buffer_ += last_predicted_path_;
+                                // дальше вносим посимвольно! (вдруг ошибки ввода)
+                                for (uint32_t i{ 0 }; i < last_predicted_path_.length(); i++) {
+                                    if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), last_predicted_path_[i]) == true) {
+                                        if (is_last_correct == false) {
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                            is_last_correct = true;
+                                        }
+                                        std::cout << last_predicted_path_[i];
+                                    }
+                                    else {
+                                        if (is_last_correct == true) {
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                                            is_last_correct = false;
+                                        }
+                                        std::cout << last_predicted_path_[i];
+                                        count_of_mistakes++;
+                                    }
+                                }
+                                last_predicted_path_.clear();
+                                inn_pointer = buffer_.length(); // установили inn_pointer на новое место
+                            }
+                            else { // не можем ввести целиком
+                                // очищаем старую подсказку
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                    std::cout << ' ';
+
+                                // работаем от смещения inn_pointer
+
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                inn_pointer = buffer_.length();
+                                
+                                buffer_.reserve(buffer_.length() + last_predicted_path_.length() - 1);
+                                for (int i{ 0 }; i < last_predicted_path_.length(); i++) {
+                                    if (inn_pointer >= max_length_)
+                                        break; // выходим если уже некуда вводить
+
+                                    buffer_.push_back(last_predicted_path_[i]);
+                                    inn_pointer++;
+
+                                    if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), last_predicted_path_[i]) == true) {
+                                        if (is_last_correct == false) {
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                            is_last_correct = true;
+                                        }
+                                        std::cout << last_predicted_path_[i];
+                                    }
+                                    else {
+                                        if (is_last_correct == true) {
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                                            is_last_correct = false;
+                                        }
+                                        std::cout << last_predicted_path_[i];
+                                        count_of_mistakes++;
+                                    }
+                                }
+                                // ввели что смогли
+                                last_predicted_path_.clear();
                             }
                         }
                     }
@@ -1915,12 +2056,13 @@ std::string EasyMenu_Dictionary::PredictWord(const std::string& prefix_str) {	//
 }
 
 std::string EasyMenu_Dictionary::PredictLastParthOfWord(const std::string& prefix) {
-    std::string full_word = PredictWord(prefix);
+    string tmp_str = get_last_word(prefix);
+    std::string full_word = PredictWord(tmp_str);
 
     if (full_word.empty())
         return "";
 
-    return full_word.substr(prefix.length());
+    return full_word.substr(tmp_str.length());
 }
 
 //---------------------------------------|
