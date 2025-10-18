@@ -30,6 +30,8 @@
 #define LIGHT_YELLOW_COLOR 14
 #define WHITE_COLOR 15
 
+class EasyDict; // предварительное объявление
+
 using std::string;
 using std::vector;
 
@@ -83,6 +85,7 @@ public:
     void set_advanced_cin_max_input_length(int32_t index, int32_t max_length);
     void set_advanced_cin_new_allowed_chars(int32_t index, std::vector<char> new_chars);
     void set_advanced_cin_new_allowed_chars(int32_t index, std::string new_chars);
+    void set_advanced_cin_new_dictionary_ptr(int32_t index, EasyDict* dictionary_ptr);
 
     void set_x_y_position(int32_t x, int32_t y);
     void set_mark_choose_on();
@@ -142,6 +145,7 @@ private:
             void set_max_inn_length(int32_t new_max_length);
             void set_new_allowed_chars(std::vector<char> new_allowed_vector);
             void set_new_allowed_chars(std::string new_allowed_chars);
+            void set_new_dictionary_ptr(EasyDict* dictionary_ptr);
 
             void ban_not_allowed_on();
             void ban_not_allowed_off();
@@ -167,6 +171,9 @@ private:
             bool is_need_output_refresh_;
             bool is_ban_not_allowed_;
             bool is_secured_;
+
+            EasyDict* dictionary_ptr_;
+            std::string last_predicted_path_;
 
             bool basic_input_check();
             void run_cin_background(char symbol, int32_t owner_index);
@@ -265,7 +272,6 @@ private:
 
 class EasyMenu_Dictionary {	// внутрення часть словаря
 private:
-    friend class EasyMenu_DictionaryManager;
     friend class EasyDict;
 
     // поля
@@ -370,8 +376,6 @@ public:
     std::string predict_word(std::string prefix);
     std::string predict_last_path(std::string prefix);
     bool enter_words(std::string words_str);
-
-    const EasyMenu_Dictionary* get_dict_main_ptr();	// дает указатель const (только predict)
 
     //bool remove();	// полное удаление (с файлами)
 };

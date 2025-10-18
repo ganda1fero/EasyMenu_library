@@ -652,6 +652,14 @@ void EasyMenu::set_advanced_cin_new_allowed_chars(int32_t index, std::vector<cha
     return;
 }
 
+void EasyMenu::set_advanced_cin_new_dictionary_ptr(int32_t index, EasyDict* dictionary_ptr) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return;
+    if (buttons_data_vector_[index].type == ADVANCED_INPUT)
+        buttons_data_vector_[index].advanced_cin.set_new_dictionary_ptr(dictionary_ptr);
+    return;
+}
+
 void EasyMenu::set_advanced_cin_new_allowed_chars(int32_t index, std::string new_chars) {
     if (index < 0 || index > count_of_lines_ - 1)
         return;
@@ -1011,6 +1019,8 @@ EasyMenu::ButtData::AdvancedCIN::AdvancedCIN() {
     is_ban_not_allowed_ = false;
     is_secured_ = false;
     owner_ptr_ = nullptr;
+    dictionary_ptr_ = nullptr;
+    last_predicted_path_ = "";
     allowed_char_vector_ = {    // базовый набор
     'A','B','C','D','E','F','G','H','I','J','K','L','M',
     'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
@@ -1062,6 +1072,11 @@ void EasyMenu::ButtData::AdvancedCIN::set_new_allowed_chars(std::vector<char> ne
         }
     }
     return;
+}
+
+void EasyMenu::ButtData::AdvancedCIN::set_new_dictionary_ptr(EasyDict* dictionary_ptr) {
+    last_predicted_path_ = "";
+    dictionary_ptr_ = dictionary_ptr;
 }
 
 void EasyMenu::ButtData::AdvancedCIN::set_new_allowed_chars(std::string new_allowed_chars) {
@@ -1270,12 +1285,31 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                         is_last_correct = true;
                                     }   // меняем цвет для вывода на будущее (если не был нужный)
                                     if (inn_pointer == buffer_.length()) { // вводим разрешенный в конец
+                                        if (last_predicted_path_.empty() == false) {
+                                            // очищаем старую подсказку
+                                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                                std::cout << ' ';
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            last_predicted_path_.clear();
+                                        }
+
                                         buffer_.push_back(tmp_char);
                                         if (is_secured_ == true)
                                             std::cout << '*';
                                         else
                                             std::cout << tmp_char;
                                         inn_pointer++;
+
+                                        if (dictionary_ptr_ != nullptr && dictionary_ptr_->is_open() && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
+                                            // нашли подсказку, выводим
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                                            std::cout << last_predicted_path_;
+                                            if (is_last_correct) 
+                                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                            else
+                                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                        }
                                     }
                                     else {  // вводим разрешенный не в конец
                                         buffer_.insert(buffer_.begin() + inn_pointer, tmp_char);
@@ -1424,14 +1458,9 @@ std::string EasyMenu_Dictionary::get_last_word(const std::string& str) {
     if (str.empty())
         return "";
 
+    if (str.back() == ' ')
+        return "";
     int end = static_cast<int>(str.length()) - 1;
-
-    while (end >= 0 && std::isspace(static_cast<unsigned char>(str[end])))
-        end--;	// пропускаем пробелы с конца
-
-    if (end < 0)
-        return ""; // строка пустая или только пробелы
-
     int start = end;
 
     while (start >= 0 && !std::isspace(static_cast<unsigned char>(str[start])))
@@ -2257,8 +2286,4 @@ bool EasyDict::enter_words(std::string words_str) {
     }
 
     return true;
-}
-
-const EasyMenu_Dictionary* EasyDict::get_dict_main_ptr() {
-    return reinterpret_cast<const EasyMenu_Dictionary*>(opened_dict_ptr_);
 }
