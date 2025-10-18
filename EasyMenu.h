@@ -1,12 +1,17 @@
 #ifndef EASYMENU_H
 #define EASYMENU_H
 
-#include <cstdint>
-#include <iostream>
-#include <vector>
-#include <algorithm>
 #include <conio.h>
 #include <Windows.h>
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <algorithm>
+#include <stdint.h>
+#include <fstream>
+#include <cstdio>
 
 #define BLACK_COLOR 0
 #define BLUE_COLOR 1
@@ -252,6 +257,123 @@ private:
     int32_t get_pointer_index(int32_t pointer_);
 
     friend class AdvancedCIN;
+};
+
+//-------------------------------------------------------------------------------------------------------------------
+
+#define EASY_MENU_MAX_REPEAT_COUNT_ 10
+
+class EasyMenu_Dictionary {	// внутренн€ часть словар€
+private:
+    friend class EasyMenu_DictionaryManager;
+    friend class EasyDict;
+
+    // пол€
+    struct Dictionary_note { // 1 слово (с попул€рностью)
+        std::string word = "";
+        uint32_t popularity = 0;
+        uint32_t main_index = 0;
+    };
+
+    std::string dictionary_name_;
+
+    std::vector<Dictionary_note*> main_dict_;
+    uint32_t max_word_length_;
+    //
+    std::vector<Dictionary_note*> additional_main_dict_;
+    uint32_t additional_max_word_length_;
+
+    bool is_need_compile_;
+
+    std::vector<std::vector<Dictionary_note*>> prefix_dicts_;
+
+    mutable std::string last_prefix_;
+    mutable uint32_t last_prefix_index_;
+
+    // методы
+    EasyMenu_Dictionary();	// конструктор по умолчанию
+    EasyMenu_Dictionary(std::string dictionary_name);
+    ~EasyMenu_Dictionary();	// деструктор
+
+    void str_to_lower(std::string& str);
+
+    std::string get_last_word(const std::string& str);
+
+    uint32_t get_max_word_length();
+
+    void compile_prefix_dicts();
+
+    bool SaveReadyData();
+    bool ReadReadyData();
+
+    bool GetReadyData(std::vector<char>& to_copy);
+    bool ReadFromCharData(const std::vector<char>& data);
+
+    void DeleteData();	// очистим данные ќ«”
+
+    bool EnterWord(std::string word);
+
+public:
+
+    // методы
+    std::string PredictWord(const std::string& prefix);	// угадать ввод
+    std::string PredictLastParthOfWord(const std::string& prefix);	// угадать недостающую часть слова
+};
+
+//-------------------------------------------------|
+
+class EasyDict {
+private:
+
+    // пол€
+    struct DictData	// структура дл€ unordered_map
+    {
+        EasyMenu_Dictionary* dict_ptr = nullptr;
+        uint32_t count = 0;
+    };
+
+    static std::unordered_map<std::string, DictData> opened_dicts_;
+
+    EasyMenu_Dictionary* opened_dict_ptr_;	// дл€ быстрого доступа классу
+
+    // методы
+
+    void str_to_lower(std::string& str);
+
+    std::vector<std::string> split_words(const std::string& str);
+
+public:
+    EasyDict& operator=(const EasyDict& reference);
+
+    // методы
+    EasyDict();
+    EasyDict(std::string dictionary_name);
+    EasyDict(const EasyDict& reference);
+    ~EasyDict();
+
+    bool open(std::string dictionary_name);
+    bool open_via_char(std::string dictionary_name, const std::vector<char>& char_vector);
+    bool create(std::string dictionary_name);
+    bool create(std::string dictionary_name, std::string copying_dictionary_name);
+    bool close();
+
+    bool is_open();
+    bool is_need_compile();
+
+    std::string get_open_name();
+
+    bool save();
+    bool save_via_char(std::vector<char>& char_vector);
+
+    bool compile();
+
+    std::string predict_word(std::string prefix);
+    std::string predict_last_path(std::string prefix);
+    bool enter_words(std::string words_str);
+
+    const EasyMenu_Dictionary* get_dict_main_ptr();	// дает указатель const (только predict)
+
+    //bool remove();	// полное удаление (с файлами)
 };
 
 #endif
