@@ -1,12 +1,17 @@
 #ifndef EASYMENU_H
 #define EASYMENU_H
 
-#include <cstdint>
-#include <iostream>
-#include <vector>
-#include <algorithm>
 #include <conio.h>
 #include <Windows.h>
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <algorithm>
+#include <stdint.h>
+#include <fstream>
+#include <cstdio>
 
 #define BLACK_COLOR 0
 #define BLUE_COLOR 1
@@ -24,6 +29,8 @@
 #define LIGHT_MAGENTA_COLOR 13
 #define LIGHT_YELLOW_COLOR 14
 #define WHITE_COLOR 15
+
+class EasyDict; // предварительное объ€вление
 
 using std::string;
 using std::vector;
@@ -78,6 +85,7 @@ public:
     void set_advanced_cin_max_input_length(int32_t index, int32_t max_length);
     void set_advanced_cin_new_allowed_chars(int32_t index, std::vector<char> new_chars);
     void set_advanced_cin_new_allowed_chars(int32_t index, std::string new_chars);
+    void set_advanced_cin_new_dictionary_ptr(int32_t index, EasyDict* dictionary_ptr);
 
     void set_x_y_position(int32_t x, int32_t y);
     void set_mark_choose_on();
@@ -137,6 +145,7 @@ private:
             void set_max_inn_length(int32_t new_max_length);
             void set_new_allowed_chars(std::vector<char> new_allowed_vector);
             void set_new_allowed_chars(std::string new_allowed_chars);
+            void set_new_dictionary_ptr(EasyDict* dictionary_ptr);
 
             void ban_not_allowed_on();
             void ban_not_allowed_off();
@@ -162,6 +171,9 @@ private:
             bool is_need_output_refresh_;
             bool is_ban_not_allowed_;
             bool is_secured_;
+
+            EasyDict* dictionary_ptr_;
+            std::string last_predicted_path_;
 
             bool basic_input_check();
             void run_cin_background(char symbol, int32_t owner_index);
@@ -252,6 +264,132 @@ private:
     int32_t get_pointer_index(int32_t pointer_);
 
     friend class AdvancedCIN;
+};
+
+//-------------------------------------------------------------------------------------------------------------------
+
+#define EASY_MENU_MAX_REPEAT_COUNT_ 10
+
+class EasyMenu_Dictionary {	// внутренн€ часть словар€
+private:
+    friend class EasyDict;
+
+    // пол€
+    struct Dictionary_note { // 1 слово (с попул€рностью)
+        std::string word = "";
+        uint32_t popularity = 0;
+        uint32_t main_index = 0;
+    };
+
+    std::string dictionary_name_;
+
+    std::vector<Dictionary_note*> main_dict_;
+    uint32_t max_word_length_;
+    //
+    std::vector<Dictionary_note*> additional_main_dict_;
+    uint32_t additional_max_word_length_;
+
+    bool is_need_compile_;
+
+    std::vector<std::vector<Dictionary_note*>> prefix_dicts_;
+
+    mutable std::string last_prefix_;
+    mutable uint32_t last_prefix_index_;
+    mutable uint32_t last_prefix_offset_;
+
+    // методы
+    EasyMenu_Dictionary();	// конструктор по умолчанию
+    EasyMenu_Dictionary(std::string dictionary_name);
+    ~EasyMenu_Dictionary();	// деструктор
+
+    void str_to_lower(std::string& str);
+
+    std::string get_last_word(const std::string& str);
+
+    uint32_t get_max_word_length();
+
+    void compile_prefix_dicts();
+
+    bool SaveReadyData();
+    bool ReadReadyData();
+
+    bool ExportViaCSV();
+    bool ImportViaCSV();
+    bool ImportViaCSV(const std::string& file_name);
+
+    bool GetReadyData(std::vector<char>& to_copy);
+    bool ReadFromCharData(const std::vector<char>& data);
+
+    void DeleteData();	// очистим данные ќ«”
+
+    bool EnterWord(std::string word);
+
+public:
+
+    // методы
+    std::string PredictWord(const std::string& prefix);	// угадать ввод
+    std::string PredictLastParthOfWord(const std::string& prefix);	// угадать недостающую часть слова
+
+    std::string ChangeOffsetParth(const std::string& prefix, bool is_up);
+};
+
+//-------------------------------------------------|
+
+class EasyDict {
+private:
+
+    // пол€
+    struct DictData	// структура дл€ unordered_map
+    {
+        EasyMenu_Dictionary* dict_ptr = nullptr;
+        uint32_t count = 0;
+    };
+
+    static std::unordered_map<std::string, DictData> opened_dicts_;
+
+    EasyMenu_Dictionary* opened_dict_ptr_;	// дл€ быстрого доступа классу
+
+    // методы
+
+    void str_to_lower(std::string& str);
+
+    std::vector<std::string> split_words(const std::string& str);
+
+public:
+    EasyDict& operator=(const EasyDict& reference);
+
+    // методы
+    EasyDict();
+    EasyDict(std::string dictionary_name);
+    EasyDict(const EasyDict& reference);
+    ~EasyDict();
+
+    bool open(std::string dictionary_name);
+    bool open_via_char(std::string dictionary_name, const std::vector<char>& char_vector);
+    bool open_via_csv();
+    bool open_via_csv(const std::string& file_name);
+    bool create(std::string dictionary_name);
+    bool create(std::string dictionary_name, std::string copying_dictionary_name);
+    bool close();
+
+    bool is_open();
+    bool is_need_compile();
+
+    std::string get_open_name();
+
+    bool save();
+    bool save_via_char(std::vector<char>& char_vector);
+    bool save_via_csv();
+
+    bool compile();
+
+    std::string predict_word(std::string prefix);
+    std::string predict_last_path(std::string prefix);
+    std::string predict_last_path_offset_up(std::string prefix);
+    std::string predict_last_path_offset_down(std::string prefix);
+    bool enter_words(std::string words_str);
+
+    //bool remove();	// полное удаление (с файлами)
 };
 
 #endif

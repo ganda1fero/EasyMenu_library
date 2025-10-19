@@ -652,6 +652,14 @@ void EasyMenu::set_advanced_cin_new_allowed_chars(int32_t index, std::vector<cha
     return;
 }
 
+void EasyMenu::set_advanced_cin_new_dictionary_ptr(int32_t index, EasyDict* dictionary_ptr) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return;
+    if (buttons_data_vector_[index].type == ADVANCED_INPUT)
+        buttons_data_vector_[index].advanced_cin.set_new_dictionary_ptr(dictionary_ptr);
+    return;
+}
+
 void EasyMenu::set_advanced_cin_new_allowed_chars(int32_t index, std::string new_chars) {
     if (index < 0 || index > count_of_lines_ - 1)
         return;
@@ -1011,6 +1019,8 @@ EasyMenu::ButtData::AdvancedCIN::AdvancedCIN() {
     is_ban_not_allowed_ = false;
     is_secured_ = false;
     owner_ptr_ = nullptr;
+    dictionary_ptr_ = nullptr;
+    last_predicted_path_ = "";
     allowed_char_vector_ = {    // базовый набор
     'A','B','C','D','E','F','G','H','I','J','K','L','M',
     'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
@@ -1062,6 +1072,11 @@ void EasyMenu::ButtData::AdvancedCIN::set_new_allowed_chars(std::vector<char> ne
         }
     }
     return;
+}
+
+void EasyMenu::ButtData::AdvancedCIN::set_new_dictionary_ptr(EasyDict* dictionary_ptr) {
+    last_predicted_path_ = "";
+    dictionary_ptr_ = dictionary_ptr;
 }
 
 void EasyMenu::ButtData::AdvancedCIN::set_new_allowed_chars(std::string new_allowed_chars) {
@@ -1193,6 +1208,14 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
             else
                 std::cout << symbol;
             inn_pointer++;
+
+            if (dictionary_ptr_ != nullptr && is_secured_ == false && dictionary_ptr_->is_open() && count_of_mistakes == 0 && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
+                // нашли подсказку, выводим
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                std::cout << last_predicted_path_;
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+            }
         }
         else if (is_ban_not_allowed_ == false && symbol != ' ') {  // если общий блок выключен и это не (попавший в неразрешенный space)
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
@@ -1210,23 +1233,70 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                 switch (kb_numb) {
                 case ENTER_BUT: // ввод (как стрелочка вниз)
                     owner_ptr_->pointer_logic(&(owner_ptr_->pointer_), &(owner_ptr_->last_pointer_), owner_ptr_->count_of_buttons_, DOWN_POINTER_BUT);
+
+                    if (last_predicted_path_.empty() == false) {
+                        // очищаем старую подсказку (не в конце)
+                        owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                        for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                            std::cout << ' ';
+                        last_predicted_path_.clear();
+                    }
+
                     return;
                     break;
                 case ESC_BUT:   // выход 
+
+                    if (last_predicted_path_.empty() == false) {
+                        // очищаем старую подсказку (не в конце)
+                        owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                        for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                            std::cout << ' ';
+                        last_predicted_path_.clear();
+                    }
+
                     return;
                     break;
                 case BACKSPACE_BUT: // удаляем 
                     if (buffer_.length() > 0) { // => есть что удалять
                         if (inn_pointer == buffer_.length()) {  // удаляем с конца
+                            if (last_predicted_path_.empty() == false) {
+                                // очищаем старую подсказку
+                                for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                    std::cout << ' ';
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                last_predicted_path_.clear();
+                            }
+
                             if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), buffer_[inn_pointer - 1]) == false)
                                 count_of_mistakes--; // значит удалили ошибочный ввод
                             buffer_.pop_back();
                             // внешняя часть
                             std::cout << '\b' << ' ' << '\b';
-                            std::cout.flush();
                             inn_pointer--;
+
+                            if (dictionary_ptr_ != nullptr && is_secured_ == false && dictionary_ptr_->is_open() && count_of_mistakes == 0 && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
+                                // нашли подсказку, выводим
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                                std::cout << last_predicted_path_;
+                                if (is_last_correct)
+                                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                else
+                                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                            }
+
+                            std::cout.flush();
                         }
                         else if(inn_pointer > 0) { // удаляем не с конца и не в начале
+                            if (last_predicted_path_.empty() == false) {
+                                // очищаем старую подсказку (не в конце)
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                    std::cout << ' ';
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                last_predicted_path_.clear();
+                            }
+
                             if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), buffer_[inn_pointer - 1]) == false)
                                 count_of_mistakes--; // значит удалили ошибочный ввод
                             buffer_.erase(buffer_.begin() + inn_pointer - 1);
@@ -1255,6 +1325,17 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                 }
                             }
                             inn_pointer--;
+
+                            if (dictionary_ptr_ != nullptr && is_secured_ == false && dictionary_ptr_->is_open() && count_of_mistakes == 0 && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
+                                // нашли подсказку, выводим (не в конце)
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                                std::cout << last_predicted_path_;
+                                if (is_last_correct)
+                                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                else
+                                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                            }
+
                             owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
                             std::cout.flush();
                         }
@@ -1270,14 +1351,39 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                         is_last_correct = true;
                                     }   // меняем цвет для вывода на будущее (если не был нужный)
                                     if (inn_pointer == buffer_.length()) { // вводим разрешенный в конец
+                                        if (last_predicted_path_.empty() == false) {
+                                            // очищаем старую подсказку
+                                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                                std::cout << ' ';
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            last_predicted_path_.clear();
+                                        }
+
                                         buffer_.push_back(tmp_char);
                                         if (is_secured_ == true)
                                             std::cout << '*';
                                         else
                                             std::cout << tmp_char;
                                         inn_pointer++;
+
+                                        if (dictionary_ptr_ != nullptr && is_secured_ == false && dictionary_ptr_->is_open() && count_of_mistakes == 0 && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
+                                            // нашли подсказку, выводим
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                                            std::cout << last_predicted_path_;
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                        }
                                     }
                                     else {  // вводим разрешенный не в конец
+                                        if (last_predicted_path_.empty() == false) {
+                                            // очищаем старую подсказку (не в конце)
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                                std::cout << ' ';
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            last_predicted_path_.clear();
+                                        }
+
                                         buffer_.insert(buffer_.begin() + inn_pointer, tmp_char);
                                         for (int i{ 0 }; i < buffer_.length() - inn_pointer; i++)
                                             std::cout << ' '; // очищаем для сдвига
@@ -1302,6 +1408,14 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                             }
                                         }
                                         inn_pointer++;
+
+                                        if (dictionary_ptr_ != nullptr && is_secured_ == false && dictionary_ptr_->is_open() && count_of_mistakes == 0 && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
+                                            // нашли подсказку, выводим (не в конце)
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                                            std::cout << last_predicted_path_;
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                        }
+
                                         owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
                                     }
                                 }
@@ -1311,11 +1425,28 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                         is_last_correct = false;
                                     }   // меняем цвет дл вывода на будущее (если не был нужный)
                                     if (inn_pointer == buffer_.length()) { // вводим неразрешенный в конец
+                                        if (last_predicted_path_.empty() == false) {
+                                            // очищаем старую подсказку
+                                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                                std::cout << ' ';
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            last_predicted_path_.clear();
+                                        }
+
                                         buffer_.push_back(tmp_char);
                                         std::cout << tmp_char;
                                         inn_pointer++;
                                     }
                                     else {  // вводим неразрешенный не в конец
+                                        if (last_predicted_path_.empty() == false) {
+                                            // очищаем старую подсказку (не в конце)
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                                std::cout << ' ';
+                                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                            last_predicted_path_.clear();
+                                        }
+
                                         buffer_.insert(buffer_.begin() + inn_pointer, tmp_char);
                                         for (int i{ 0 }; i < buffer_.length() - inn_pointer; i++)
                                             std::cout << ' '; // очищаем для сдвига
@@ -1348,6 +1479,78 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                             }
                         }
                     }
+                    else {  // => был нажат TAB
+                        if (last_predicted_path_.empty() == false && is_secured_ == false && count_of_mistakes == 0) {
+                            // довводим (до макс длины!)
+                            int can_write_tmp = max_length_ - buffer_.length(); // получили возможное количество символов
+
+                            if (last_predicted_path_.length() <= can_write_tmp) { // можем ввести целиком
+                                // перемещаем указатель на конец слова
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                buffer_ += last_predicted_path_;
+                                // дальше вносим посимвольно! (вдруг ошибки ввода)
+                                for (uint32_t i{ 0 }; i < last_predicted_path_.length(); i++) {
+                                    if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), last_predicted_path_[i]) == true) {
+                                        if (is_last_correct == false) {
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                            is_last_correct = true;
+                                        }
+                                        std::cout << last_predicted_path_[i];
+                                    }
+                                    else {
+                                        if (is_last_correct == true) {
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                                            is_last_correct = false;
+                                        }
+                                        std::cout << last_predicted_path_[i];
+                                        count_of_mistakes++;
+                                    }
+                                }
+                                last_predicted_path_.clear();
+                                inn_pointer = buffer_.length(); // установили inn_pointer на новое место
+                            }
+                            else { // не можем ввести целиком
+                                // очищаем старую подсказку
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                    std::cout << ' ';
+
+                                // работаем от смещения inn_pointer
+
+                                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                                inn_pointer = buffer_.length();
+                                
+                                buffer_.reserve(buffer_.length() + last_predicted_path_.length() - 1);
+                                for (int i{ 0 }; i < last_predicted_path_.length(); i++) {
+                                    if (inn_pointer >= max_length_)
+                                        break; // выходим если уже некуда вводить
+
+                                    buffer_.push_back(last_predicted_path_[i]);
+                                    inn_pointer++;
+
+                                    if (std::binary_search(allowed_char_vector_.begin(), allowed_char_vector_.end(), last_predicted_path_[i]) == true) {
+                                        if (is_last_correct == false) {
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                                            is_last_correct = true;
+                                        }
+                                        std::cout << last_predicted_path_[i];
+                                    }
+                                    else {
+                                        if (is_last_correct == true) {
+                                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                                            is_last_correct = false;
+                                        }
+                                        std::cout << last_predicted_path_[i];
+                                        count_of_mistakes++;
+                                    }
+                                }
+                                // ввели что смогли
+                                last_predicted_path_.clear();
+                            }
+
+                            std::cout.flush();
+                        }
+                    }
                     break;
                 }
             }
@@ -1355,12 +1558,60 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                 switch (kb_numb)
                 {
                 case UP_POINTER_BUT:
-                    owner_ptr_->pointer_logic(&(owner_ptr_->pointer_), &(owner_ptr_->last_pointer_), owner_ptr_->count_of_buttons_, UP_POINTER_BUT);
-                    return;
+                    if (last_predicted_path_.empty()) {
+                        owner_ptr_->pointer_logic(&(owner_ptr_->pointer_), &(owner_ptr_->last_pointer_), owner_ptr_->count_of_buttons_, UP_POINTER_BUT);
+                        return;
+                    }
+                    else if (dictionary_ptr_ != nullptr) {  // значит используем трелочки для подсказок
+                        std::string str_buffer = dictionary_ptr_->predict_last_path_offset_up(buffer_);
+                        if (str_buffer.empty() == false) {   // нашли новую подсказку                           
+                            // очищаем старую подсказку (не в конце)
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                std::cout << ' ';
+                            
+                            last_predicted_path_ = str_buffer;
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+
+                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                            std::cout << last_predicted_path_;
+                            if (is_last_correct)
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                            else
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                            
+                            std::cout.flush();
+                        }
+                    }
                     break;
                 case DOWN_POINTER_BUT:
-                    owner_ptr_->pointer_logic(&(owner_ptr_->pointer_), &(owner_ptr_->last_pointer_), owner_ptr_->count_of_buttons_, DOWN_POINTER_BUT);
-                    return;
+                    if (last_predicted_path_.empty()) {
+                        owner_ptr_->pointer_logic(&(owner_ptr_->pointer_), &(owner_ptr_->last_pointer_), owner_ptr_->count_of_buttons_, DOWN_POINTER_BUT);
+                        return;
+                    }
+                    else if (dictionary_ptr_ != nullptr) {
+                        std::string str_buffer = dictionary_ptr_->predict_last_path_offset_down(buffer_);
+                        if (str_buffer.empty() == false) {   // нашли новую подсказку                           
+                            // очищаем старую подсказку (не в конце)
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                std::cout << ' ';
+
+                            last_predicted_path_ = str_buffer;
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+
+                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                            std::cout << last_predicted_path_;
+                            if (is_last_correct)
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                            else
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+
+                            std::cout.flush();
+                        }
+                    }
                     break;
                 case LEFT_POINTER_BUT:
                     if (inn_pointer > 0) {
@@ -1389,5 +1640,1038 @@ char EasyMenu::ButtData::AdvancedCIN::GetCharKey(int byte_system, int kb_numb) {
     return '\0';    // значит нельзя получить char (или не та система или в такой сиситеме нет)
 }
 
+//-------------------------------------------------------------------------------------------------------------------
 
+#define EASY_MENU_DICT_VERSION 1
 
+std::unordered_map<std::string, EasyDict::DictData> EasyDict::opened_dicts_; // определили внешний map словарей
+
+// все для EasyMenu_Dictionary (private)
+
+EasyMenu_Dictionary::EasyMenu_Dictionary() {	// конструктор по умолчанию
+    dictionary_name_ = "";
+    max_word_length_ = 0;
+    additional_max_word_length_ = 0;
+    is_need_compile_ = false;
+    last_prefix_ = "";
+    last_prefix_index_ = 0;
+}
+
+EasyMenu_Dictionary::EasyMenu_Dictionary(std::string dictionary_name) : EasyMenu_Dictionary() {
+    this->dictionary_name_ = dictionary_name;
+}
+
+EasyMenu_Dictionary::~EasyMenu_Dictionary() {
+    DeleteData();	// очищаем динамиескую память
+}
+
+void EasyMenu_Dictionary::str_to_lower(std::string& str) {
+    for (char& letter : str) {
+        letter = std::tolower(static_cast<unsigned char>(letter));
+    }
+}
+
+std::string EasyMenu_Dictionary::get_last_word(const std::string& str) {
+    if (str.empty())
+        return "";
+
+    if (str.back() == ' ')
+        return "";
+    int end = static_cast<int>(str.length()) - 1;
+    int start = end;
+
+    while (start >= 0 && !std::isspace(static_cast<unsigned char>(str[start])))
+        start--;	// идем влево до пробела или начала строки
+
+    start++;	// теперь start указывает на пробел или -1
+
+    return str.substr(start, end - start + 1);
+}
+
+uint32_t EasyMenu_Dictionary::get_max_word_length() {
+    if (main_dict_.empty())
+        return 0;
+
+    auto it = std::max_element(main_dict_.begin(), main_dict_.end(),
+        [](const Dictionary_note* first_ptr, const Dictionary_note* second_ptr) {
+            return first_ptr->word.length() < second_ptr->word.length();
+        });
+    return (*it)->word.length();
+}
+
+void EasyMenu_Dictionary::compile_prefix_dicts() {
+    if (additional_main_dict_.empty() == false) {	// переносим все из добавочного (если есть)
+        main_dict_.insert(main_dict_.end(), additional_main_dict_.begin(), additional_main_dict_.end());
+        additional_main_dict_.clear();
+    }
+
+    if (additional_max_word_length_ > max_word_length_)
+        max_word_length_ = additional_max_word_length_;
+
+    if (main_dict_.empty())
+        return;	// невозмоно скомпилировать (не из чего)
+
+    prefix_dicts_.clear();	// на всякий очищаем (безопасно с пустым)
+
+    additional_max_word_length_ = 0;
+
+    if (max_word_length_ < 1)	// если максимальная длина слов еще не проссчитана
+        max_word_length_ = get_max_word_length();
+
+    last_prefix_.clear();
+    last_prefix_index_ = 0;
+
+    is_need_compile_ = false;
+
+    // начинаем саму компиляцию
+    std::sort(main_dict_.begin(), main_dict_.end(),
+        [](const Dictionary_note* first, const Dictionary_note* second) {
+            return first->word < second->word;
+        });			// отсортировали лексикографически main_dict_
+
+    for (uint32_t i{ 0 }; i < main_dict_.size(); i++)
+        main_dict_[i]->main_index = i;	// сохранили индексацию изначального массива (для востановления при передаче)
+
+    prefix_dicts_.resize(max_word_length_ - 1);
+    for (uint32_t i{ 0 }; i < main_dict_.size(); i++) {
+        for (uint32_t len{ 1 }; len < main_dict_[i]->word.length(); len++) {
+            prefix_dicts_[len - 1].push_back(main_dict_[i]);
+        }
+    }		// записали все подходящие указатели слов в префиксные вектора, сохранив лексикографический порядок
+
+    for (uint32_t i{ 0 }; i < prefix_dicts_.size(); i++) {	// перебор по всем префиксным векторам
+        std::sort(prefix_dicts_[i].begin(), prefix_dicts_[i].end(),
+            [i](const Dictionary_note* first, const Dictionary_note* second) {
+                int cmp = first->word.compare(0, i + 1, second->word, 0, i + 1);
+                if (cmp == 0)	// сумма кодов равна
+                    return first->popularity > second->popularity;
+                return cmp < 0;
+            });		// отсортировали дополнительно чисто по (i + 1) длине префикса, если равны => сравнили по популярностии >
+
+        uint32_t tmp_count{ 0 };
+        auto new_end_it = std::unique(prefix_dicts_[i].begin(), prefix_dicts_[i].end(),
+            [i, &tmp_count](const Dictionary_note* first, const Dictionary_note* second) {
+                if (first->word.compare(0, i + 1, second->word, 0, i + 1) != 0) {
+                    tmp_count = 1;
+                    return false;
+                }
+                return ++tmp_count > EASY_MENU_MAX_REPEAT_COUNT_;
+            });		// пометили через unique что нужно удалить (менее популярные повторки (если их > EASY_MENU_MAX_REPEAT_COUNT_))
+
+        prefix_dicts_[i].erase(new_end_it, prefix_dicts_[i].end());
+    }	// по итогу каждый из префиксных массивов лично отсортирован по размеру префиксов + убраны менее популярные (если их > EASY_MENU_MAX_REPEAT_COUNT_)
+    return;
+}
+
+bool EasyMenu_Dictionary::SaveReadyData() {
+    if (dictionary_name_.empty()) // не можем сохранить - нет имени!
+        return false;
+
+    const std::string tmp_to_file = dictionary_name_ + "tmp_RD.emd"; // подготовили имя (врмеменное)
+    const std::string to_file = dictionary_name_ + "_RD.emd";	// имя для итогового файла
+
+    std::ofstream file(tmp_to_file, std::ios::binary | std::ios::trunc);	// открыли в бинарном виде, удалив что было
+    if (file.is_open() == false)
+        return false; // не смогли создать файл
+
+    // дальше сохраняем данные
+    uint32_t version = EASY_MENU_DICT_VERSION;
+    file.write(reinterpret_cast<char*>(&version), sizeof(version));
+
+    file.write(reinterpret_cast<char*>(&max_word_length_), sizeof(max_word_length_));
+
+    file.write(reinterpret_cast<char*>(&is_need_compile_), sizeof(is_need_compile_));
+
+    uint32_t uint32_t_buffer = main_dict_.size();
+    file.write(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+
+    for (uint32_t i{ 0 }; i < main_dict_.size(); i++) {	// записываем BaseData
+        uint32_t_buffer = main_dict_[i]->word.length();
+        file.write(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+
+        file.write(main_dict_[i]->word.data(), uint32_t_buffer);
+
+        file.write(reinterpret_cast<char*>(&main_dict_[i]->popularity), sizeof(main_dict_[i]->popularity));
+    }
+
+    uint32_t_buffer = prefix_dicts_.size();
+    file.write(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+
+    for (uint32_t i{ 0 }; i < prefix_dicts_.size(); i++) {
+        uint32_t_buffer = prefix_dicts_[i].size();
+        file.write(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+
+        for (uint32_t g{ 0 }; g < prefix_dicts_[i].size(); g++)
+            file.write(reinterpret_cast<char*>(&prefix_dicts_[i][g]->main_index), sizeof(prefix_dicts_[i][g]->main_index));
+    }
+
+    // дальше проверяем корректность
+    if (!file) { // значит при записи была ошибка (битый файл!)
+        file.close();
+        std::remove(tmp_to_file.c_str());	// удаляем временный файл
+        return false;
+    }
+    // значит ошибок не было!
+
+    file.close();
+
+    std::remove(to_file.c_str()); // удаляем, если есть
+    if (std::rename(tmp_to_file.c_str(), to_file.c_str()) == 0)
+        return true;
+    else
+        std::remove(tmp_to_file.c_str());	// очистили временный, если не смогли переименовать
+    return false; // значит не смогли переименовать
+}
+
+bool EasyMenu_Dictionary::ReadReadyData() {
+    if (dictionary_name_.empty()) // не можем прочитать - нет имени!
+        return false;
+
+    const std::string to_file = dictionary_name_ + "_RD.emd";	// имя для файла
+
+    std::ifstream file(to_file, std::ios::binary | std::ios::in);
+    if (file.is_open() == false)
+        return false; // не смогли создать файл
+
+    file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+    // подготовка к безопасному чтению
+    uint32_t uint32_t_buffer;
+    uint32_t tmp_max_word_length;
+    bool tmp_is_need_compile;
+    std::vector<Dictionary_note*> tmp_main_dict;
+    std::vector<std::vector<Dictionary_note*>> tmp_prefix_dict;
+    try {
+        // начинаем читать
+        file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+        if (uint32_t_buffer != EASY_MENU_DICT_VERSION) {
+            file.close();
+            return false;
+        }
+
+        file.read(reinterpret_cast<char*>(&tmp_max_word_length), sizeof(tmp_max_word_length));
+
+        file.read(reinterpret_cast<char*>(&tmp_is_need_compile), sizeof(tmp_is_need_compile));
+
+        file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+        tmp_main_dict.resize(uint32_t_buffer); // именно resize
+
+        for (uint32_t i{ 0 }; i < tmp_main_dict.size(); i++) {
+            tmp_main_dict[i] = new Dictionary_note;
+            tmp_main_dict[i]->main_index = i; // логически востанавливаем 
+
+            file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+
+            tmp_main_dict[i]->word.resize(uint32_t_buffer);
+            file.read(&tmp_main_dict[i]->word[0], tmp_main_dict[i]->word.size());
+
+            file.read(reinterpret_cast<char*>(&tmp_main_dict[i]->popularity), sizeof(tmp_main_dict[i]->popularity));
+        }
+
+        file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+        tmp_prefix_dict.resize(uint32_t_buffer);	// именно resize
+
+        for (uint32_t i{ 0 }; i < tmp_prefix_dict.size(); i++) {
+            file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+            tmp_prefix_dict[i].resize(uint32_t_buffer);
+
+            for (uint32_t g{ 0 }; g < tmp_prefix_dict[i].size(); g++) {
+                file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+                tmp_prefix_dict[i][g] = tmp_main_dict[uint32_t_buffer];	// присвоили указатель
+            }
+        }
+        // конец чтения файла
+
+        if (file.good() == false && file.eof() == false) {
+            file.close();
+
+            for (uint32_t i{ 0 }; i < tmp_main_dict.size(); i++)
+                if (tmp_main_dict[i] != nullptr)
+                    delete tmp_main_dict[i];	// очищаем если нужно
+
+            return false;
+        }
+    }
+    catch (...) { // если произошла ошибка (при чтении)
+        file.close();
+
+        for (uint32_t i{ 0 }; i < tmp_main_dict.size(); i++)
+            if (tmp_main_dict[i] != nullptr)
+                delete tmp_main_dict[i];	// очищаем если нужно
+
+        return false;
+    }
+
+    // ошибки не было - переносим данные (в основыную)
+    file.close();
+
+    DeleteData(); // очищаем всю память (особенно динамическую)
+
+    max_word_length_ = tmp_max_word_length;
+    is_need_compile_ = tmp_is_need_compile;
+    main_dict_ = tmp_main_dict; // скопировали все указатели
+    prefix_dicts_ = tmp_prefix_dict; // скопировали все векторы указателей
+
+    return true;
+}
+
+bool EasyMenu_Dictionary::ExportViaCSV() {
+    if (dictionary_name_.empty() || main_dict_.empty())
+        return false;
+
+    const std::string to_file = dictionary_name_ + ".csv";	// имя для итогового файла
+
+    std::ofstream file(to_file, std::ios::trunc);	// открыли в бинарном виде, удалив что было
+    if (file.is_open() == false)
+        return false; // не смогли создать файл
+
+    // записываем
+    try {
+        file << '\"' << main_dict_[0]->word << '\"' << ";\"" << main_dict_[0]->popularity << '\"';
+
+        for (uint32_t i{ 1 }; i < main_dict_.size(); i++)
+            file << '\n' << '\"' << main_dict_[i]->word << '\"' << ";\"" << main_dict_[i]->popularity << '\"';
+
+        if (!file) { // значит при записи была ошибка (битый файл!)
+            file.close();
+            std::remove(to_file.c_str());	// удаляем файл
+            return false;
+        }
+    }
+    catch (...) {
+        file.close();
+        std::remove(to_file.c_str());	// удаляем файл
+        return false;
+    }
+
+    file.close();
+
+    return true;
+}
+
+bool EasyMenu_Dictionary::ImportViaCSV() {
+    
+    return ImportViaCSV(dictionary_name_);
+}
+
+bool EasyMenu_Dictionary::ImportViaCSV(const std::string& file_name) {
+    if (dictionary_name_.empty() || file_name.empty()) // не можем прочитать - нет имени!
+        return false;
+
+    const std::string to_file = file_name + ".csv";	// имя для файла
+
+    std::ifstream file(to_file, std::ios::in);
+    if (file.is_open() == false)
+        return false; // не смогли создать файл
+
+    // подготовка к безопасному чтению
+    uint32_t tmp_max_word_length = 0;
+    bool tmp_is_need_compile = true;
+    std::vector<Dictionary_note*> tmp_main_dict;
+    try {
+        size_t sep_index;
+        std::string tmp_bufer;
+
+        // начинаем читать
+        while (std::getline(file, tmp_bufer)) {
+            sep_index = tmp_bufer.find(';');
+
+            if (sep_index == std::string::npos)
+                break;  // скорее всего данные закончились
+
+            if (tmp_bufer[sep_index + 1] != '\"' || tmp_bufer[sep_index - 1] != '\"')
+                throw;  // это ошибка формата
+            
+            if (tmp_bufer[0] != '\"' || tmp_bufer[tmp_bufer.length() - 1] != '\"')
+                throw;  // это ошибка формата
+
+            Dictionary_note* tmp_ptr = new Dictionary_note;
+            if (sep_index <= 2) throw std::runtime_error("Empty word field");
+            tmp_ptr->word = tmp_bufer.substr(1, sep_index - 2);
+            std::string number_part = tmp_bufer.substr(sep_index + 2);
+            if (number_part.back() == '"')
+                number_part.pop_back();
+            tmp_ptr->popularity = std::stoi(number_part);
+
+            tmp_main_dict.push_back(tmp_ptr);
+        }
+    }
+    catch (...) {
+        // словили какую-то ошибку
+        file.close();
+
+        for (uint32_t i{ 0 }; i < tmp_main_dict.size(); i++)
+            if (tmp_main_dict[i] != nullptr)
+                delete tmp_main_dict[i];	// очищаем если нужно
+
+        return false;
+    }
+
+    // ошибки не было - переносим данные (в основыную)
+    file.close();
+
+    DeleteData(); // очищаем всю память (особенно динамическую)
+
+    max_word_length_ = tmp_max_word_length;
+    is_need_compile_ = tmp_is_need_compile;
+    main_dict_ = tmp_main_dict; // скопировали все указатели
+
+    compile_prefix_dicts();
+
+    return true;
+}
+
+bool EasyMenu_Dictionary::GetReadyData(std::vector<char>& to_copy) {
+    if (SaveReadyData() == false)	// контрольное сохранание
+        return false;
+
+    const std::string to_file = dictionary_name_ + "_RD.emd";	// имя для файла
+
+    std::ifstream file(to_file, std::ios::binary | std::ios::ate);
+    if (file.is_open() == false)
+        return false;
+
+    file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+    auto file_size = file.tellg(); // прочитали конечную позицию
+    if (file_size == 0) {
+        file.close();
+        return false;
+    }
+
+    to_copy.clear();
+    to_copy.resize(file_size);
+
+    try {
+        file.seekg(0);	// поставили в начало
+        file.read(to_copy.data(), file_size);
+    }
+    catch (...) { // какая-то ошибка
+        file.close();
+        return false;
+    }
+
+    file.close();
+    return true; // долши сюда - все хорошо)
+}
+
+bool EasyMenu_Dictionary::ReadFromCharData(const std::vector<char>& data) {
+    uint32_t data_index = 0;	// для смещения чтения
+
+    // подготовка к безопасному чтению
+    uint32_t uint32_t_buffer;
+    uint32_t tmp_max_word_length;
+    bool tmp_is_need_compile;
+    std::vector<Dictionary_note*> tmp_main_dict;
+    std::vector<std::vector<Dictionary_note*>> tmp_prefix_dict;
+
+    // начинаем само чтение
+    try {
+        // начинаем читать
+        uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+        data_index += sizeof(uint32_t_buffer);
+
+        if (uint32_t_buffer != EASY_MENU_DICT_VERSION)
+            return false;
+
+        tmp_max_word_length = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+        data_index += sizeof(tmp_max_word_length);
+
+        tmp_is_need_compile = *(reinterpret_cast<const bool*>(&data[data_index]));
+        data_index += sizeof(tmp_is_need_compile);
+
+        uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+        data_index += sizeof(uint32_t_buffer);
+        tmp_main_dict.resize(uint32_t_buffer);	// именно resize
+
+        for (uint32_t i{ 0 }; i < tmp_main_dict.size(); i++) {
+            tmp_main_dict[i] = new Dictionary_note;
+            tmp_main_dict[i]->main_index = i; // логически востанавливаем 
+
+            uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+            data_index += sizeof(uint32_t_buffer);
+
+            tmp_main_dict[i]->word.resize(uint32_t_buffer); // именно resize
+            for (uint32_t g{ 0 }; g < tmp_main_dict[i]->word.size(); g++) {
+                tmp_main_dict[i]->word[g] = data[data_index];
+                data_index++;
+            }
+
+            tmp_main_dict[i]->popularity = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+            data_index += sizeof(tmp_main_dict[i]->popularity);
+        }
+
+        uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+        data_index += sizeof(uint32_t_buffer);
+        tmp_prefix_dict.resize(uint32_t_buffer);	// именно resize
+
+        for (uint32_t i{ 0 }; i < tmp_prefix_dict.size(); i++) {
+            uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+            data_index += sizeof(uint32_t_buffer);
+
+            tmp_prefix_dict[i].resize(uint32_t_buffer);
+
+            for (uint32_t g{ 0 }; g < tmp_prefix_dict[i].size(); g++) {
+                uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+                data_index += sizeof(uint32_t_buffer);
+
+                tmp_prefix_dict[i][g] = tmp_main_dict[uint32_t_buffer];
+            }
+        }
+        // конец чтения
+    }
+    catch (...) {	// если произошла ошибка (при чтении)
+        for (uint32_t i{ 0 }; i < tmp_main_dict.size(); i++)
+            if (tmp_main_dict[i] != nullptr)
+                delete tmp_main_dict[i];	// очищаем если нужно
+
+        return false;
+    }
+
+    // ошибки не было - переносим данные (в основову)
+    DeleteData();
+
+    max_word_length_ = tmp_max_word_length;
+    is_need_compile_ = tmp_is_need_compile;
+    main_dict_ = tmp_main_dict; // скопировали все указатели
+    prefix_dicts_ = tmp_prefix_dict; // скопировали все векторы указателей
+
+    return true;
+}
+
+void EasyMenu_Dictionary::DeleteData() {
+    last_prefix_ = "";
+    last_prefix_index_ = 0;
+
+    prefix_dicts_.clear();
+
+    is_need_compile_ = false;
+
+    max_word_length_ = 0;
+    additional_max_word_length_ = 0;
+
+    for (uint32_t i{ 0 }; i < main_dict_.size(); i++)
+        if (main_dict_[i] != nullptr)
+            delete main_dict_[i];
+    main_dict_.clear();
+
+    for (uint32_t i{ 0 }; i < additional_main_dict_.size(); i++)
+        if (additional_main_dict_[i] != nullptr)
+            delete additional_main_dict_[i];
+    additional_main_dict_.clear();
+}
+
+bool EasyMenu_Dictionary::EnterWord(std::string word) {
+    if (dictionary_name_.empty())
+        return false;	// у нас нет словаря (имя = словарь)
+
+    str_to_lower(word);
+
+    auto it = std::lower_bound(main_dict_.begin(), main_dict_.end(), word,
+        [](const Dictionary_note* first, const std::string str_word) {
+            return first->word < str_word;
+        });
+
+    if (it == main_dict_.end() || (*it)->word != word) {	// в main_dict_ (word) не оказалось
+        if (additional_main_dict_.empty()) { // доп словарь пустой - просто добавляем
+            Dictionary_note* tmp_ptr = new Dictionary_note;
+            tmp_ptr->word = word;
+            tmp_ptr->popularity = 1;
+
+            additional_main_dict_.push_back(tmp_ptr);
+            if (additional_max_word_length_ < word.length())
+                additional_max_word_length_ = word.length();
+        }
+        else {	// нужно поискать в доп словаре!
+            auto add_it = std::lower_bound(additional_main_dict_.begin(), additional_main_dict_.end(), word,
+                [](const Dictionary_note* first, const std::string str_word) {
+                    return first->word < str_word;
+                });
+
+            if (add_it == additional_main_dict_.end() || (*add_it)->word != word) {	// значит такого слова нет, добавляем
+                Dictionary_note* tmp_ptr = new Dictionary_note;
+                tmp_ptr->word = word;
+                tmp_ptr->popularity = 1;
+
+                additional_main_dict_.insert(add_it, tmp_ptr);	// добавили, сохранив сортировку
+                if (additional_max_word_length_ < word.length())
+                    additional_max_word_length_ = word.length();
+            }
+            else    // такое слово есть - делаем ++
+                (*add_it)->popularity++;
+        }
+    }
+    else	// word найден в main_dict_!
+        (*it)->popularity++;	// увеличили счетчик популярности
+
+    is_need_compile_ = true;
+    return true;
+}
+
+// все для EasyMenu_Dictionary (public)
+
+std::string EasyMenu_Dictionary::PredictWord(const std::string& prefix_str) {	// поиск только для самого популярного
+    if (prefix_str.empty())
+        return "";
+
+    std::string prefix = get_last_word(prefix_str);
+
+    uint32_t prefix_length = prefix.length();
+
+    if (prefix_length > 0 && prefix_length <= prefix_dicts_.size()) {	// выполняем только если результат возможен
+        str_to_lower(prefix);
+
+        auto it = std::lower_bound(prefix_dicts_[prefix_length - 1].begin(), prefix_dicts_[prefix_length - 1].end(), prefix,
+            [prefix_length](const Dictionary_note* first, const std::string& pref_str) {
+                return first->word.compare(0, prefix_length, pref_str) < 0;
+            });		// находим итератор на первый элемент, содержащий префикс (он же самый популярный)
+
+        if (it != prefix_dicts_[prefix_length - 1].end() && (*it)->word.compare(0, prefix_length, prefix, 0, prefix_length) == 0) {	// проверили не находитсчя ли итератор в конце (не нашли) и точно ли полученная строка начинается на префикс
+            last_prefix_ = prefix;	// записали успешно найденное (самое популярное) слово из возможных
+            last_prefix_index_ = std::distance(prefix_dicts_[prefix_length - 1].begin(), it);	// записали индекс этого слова, для возможности дальнейшего смещения
+            last_prefix_offset_ = 0;    // обнулили оффсет
+            return (*it)->word;
+        }
+        else
+            return "";
+    }
+    return "";
+}
+
+std::string EasyMenu_Dictionary::PredictLastParthOfWord(const std::string& prefix) {
+    if (prefix.empty())
+        return "";
+    
+    std::string tmp_str = get_last_word(prefix);
+
+    std::string full_word = PredictWord(tmp_str);
+
+    if (full_word.empty())
+        return "";
+
+    return full_word.substr(tmp_str.length());
+}
+
+std::string EasyMenu_Dictionary::ChangeOffsetParth(const std::string& prefix, bool is_up) {
+    if (prefix.empty())
+        return "";  // пустые данные
+
+    string tmp_str = get_last_word(prefix);
+    str_to_lower(tmp_str);
+
+    if (tmp_str != last_prefix_)
+        return "";  // не те данные для сдвига
+
+    if (is_up) {    // двигаемся вверх (-> более популярное)
+        if (last_prefix_offset_ > 0)  // к изначальному можем двигаться без проверок
+            return prefix_dicts_[tmp_str.length() - 1][last_prefix_index_ + (--last_prefix_offset_)]->word.substr(tmp_str.length());
+    }
+    else {  // двигаемся вниз (-> менее популярное)
+        if (prefix_dicts_[tmp_str.length() - 1][last_prefix_index_ + (++last_prefix_offset_)]->word.compare(0, tmp_str.length(), tmp_str) == 0)    // значит префиксы совпадают
+            return prefix_dicts_[tmp_str.length() - 1][last_prefix_index_ + last_prefix_offset_]->word.substr(tmp_str.length());
+        else // значит не совпало -> откатываем last_prefix_offset_
+            --last_prefix_offset_;
+    }
+
+    return ""; 
+}
+
+//---------------------------------------|
+// Все для EasyDict (private)
+
+void EasyDict::str_to_lower(std::string& str) {
+    for (char& letter : str) {
+        letter = std::tolower(static_cast<unsigned char>(letter));
+    }
+}
+
+std::vector<std::string> EasyDict::split_words(const std::string& str) {
+    std::vector<std::string> words;
+    words.reserve(3);
+
+    uint32_t start = 0, end = 0;
+
+    while (end < str.length()) {
+        while (start < str.length() && std::isspace(str[start])) {
+            start++;	// Пропускаем пробелы
+        }
+
+        if (start >= str.length())
+            break;
+
+        end = start;
+        while (end < str.length() && std::isspace(str[end]) == false) {
+            end++;	// Находим конец слова
+        }
+
+        words.push_back(str.substr(start, end - start));	// Добавляем слово
+        start = end;
+    }
+
+    return words;
+}
+
+// операторы (public)
+
+EasyDict& EasyDict::operator=(const EasyDict& reference) {
+    if (this == &reference)
+        return *this;
+
+    close();
+
+    opened_dict_ptr_ = reference.opened_dict_ptr_;
+
+    if (opened_dict_ptr_ != nullptr) {
+        auto it = opened_dicts_.find(opened_dict_ptr_->dictionary_name_);
+        if (it != opened_dicts_.end())
+            it->second.count++;
+    }
+
+    return *this;
+}
+
+// Все для EasyDict (public)
+
+EasyDict::EasyDict() {
+    opened_dict_ptr_ = nullptr;
+}
+
+EasyDict::EasyDict(std::string dictionary_name) : EasyDict() {
+    open(dictionary_name);
+}
+
+EasyDict::EasyDict(const EasyDict& reference) {
+    opened_dict_ptr_ = reference.opened_dict_ptr_;
+
+    if (opened_dict_ptr_ != nullptr) {	// увеличиваем счетчик связей
+        auto it = opened_dicts_.find(opened_dict_ptr_->dictionary_name_);
+        if (it != opened_dicts_.end())
+            it->second.count++;
+    }
+}
+
+EasyDict::~EasyDict() {
+    close();
+}
+
+bool EasyDict::open(std::string dictionary_name) {
+    if (dictionary_name.empty())
+        return false;
+
+    if (opened_dict_ptr_ != nullptr)
+        close();	// закроем, если был открыт 
+
+    str_to_lower(dictionary_name);
+
+    // пытаемся найти в unordered_map
+    auto it = opened_dicts_.find(dictionary_name);
+    if (it != opened_dicts_.end()) {	// нашли в открытых
+        it->second.count++;	// увеличили счетчик
+        opened_dict_ptr_ = it->second.dict_ptr;	// прировняли указатель
+
+        return true;
+    }
+
+    // пытаемся прочитать новый (файл)
+    EasyMenu_Dictionary* tmp_ptr = new EasyMenu_Dictionary(dictionary_name);
+
+    if (tmp_ptr->ReadReadyData()) {
+        // смогли прочитать - добавляем в map
+        DictData tmp_data;
+        tmp_data.count = 1;
+        tmp_data.dict_ptr = tmp_ptr;
+
+        opened_dicts_.emplace(dictionary_name, tmp_data);
+        opened_dict_ptr_ = tmp_ptr;
+
+        return true;
+    }
+
+    // не смогли найти в map + открыть из файла
+    delete tmp_ptr;
+
+    return false;
+}
+
+bool EasyDict::open_via_char(std::string dictionary_name, const std::vector<char>& char_vector) {
+    if (dictionary_name.empty())
+        return false;
+
+    if (opened_dict_ptr_ != nullptr)
+        close();	// закроем, если был открыт 
+
+    str_to_lower(dictionary_name);
+
+    // пытаемся найти в unordered_map
+    auto it = opened_dicts_.find(dictionary_name);
+    if (it != opened_dicts_.end()) {	// нашли в открытых (просто изменяем ОЗУ (без сохранения))
+        if (it->second.dict_ptr->ReadFromCharData(char_vector) == false)
+            return false;
+        it->second.count++;	// увеличили счетчик
+        opened_dict_ptr_ = it->second.dict_ptr;	// прировняли указатель
+
+        return true;
+    }
+
+    // в map не оказалось => просто созадем (без сохранения)
+    EasyMenu_Dictionary* tmp_ptr = new EasyMenu_Dictionary(dictionary_name);
+
+    if (tmp_ptr->ReadFromCharData(char_vector)) {	// смогли прочитать
+        // смогли прочитать - добавляем в map
+        DictData tmp_data;
+        tmp_data.count = 1;
+        tmp_data.dict_ptr = tmp_ptr;
+
+        opened_dicts_.emplace(dictionary_name, tmp_data);
+        opened_dict_ptr_ = tmp_ptr;
+
+        return true;
+    }
+
+    // не смогли найти в map + прочитать из файла
+    delete tmp_ptr;
+
+    return false;
+}
+
+bool EasyDict::open_via_csv() {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    opened_dict_ptr_->ImportViaCSV();
+}
+
+bool EasyDict::open_via_csv(const std::string& file_name) {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    opened_dict_ptr_->ImportViaCSV(file_name);
+}
+
+bool EasyDict::create(std::string dictionary_name) {
+    if (dictionary_name.empty())
+        return false;
+
+    if (opened_dict_ptr_ != nullptr)
+        close();
+
+    str_to_lower(dictionary_name);
+
+    // проверяем, открыт ли такой словарь в map
+    auto it = opened_dicts_.find(dictionary_name);
+    if (it != opened_dicts_.end()) {	// значит нашли 
+        it->second.count++;
+        opened_dict_ptr_ = it->second.dict_ptr;
+
+        it->second.dict_ptr->DeleteData();	// очистили ОЗУ в словаре
+        it->second.dict_ptr->SaveReadyData();	// сохранили пустой словарь
+
+        return true;
+    }
+
+    // в map не оказалось => просто сохраняем (в файл)
+    EasyMenu_Dictionary* tmp_ptr = new EasyMenu_Dictionary(dictionary_name);
+    if (tmp_ptr->SaveReadyData() == false) {	// не удалось сохранить файл (создать)
+        delete tmp_ptr;
+
+        return false;
+    }
+
+    // успешно сохранили => добавляем в map
+    DictData tmp_data;
+    tmp_data.count = 1;
+    tmp_data.dict_ptr = tmp_ptr;
+
+    opened_dicts_.emplace(dictionary_name, tmp_data);
+    opened_dict_ptr_ = tmp_ptr;
+
+    return true;
+}
+
+bool EasyDict::create(std::string dictionary_name, std::string copying_dictionary_name) {
+    if (dictionary_name.empty() || copying_dictionary_name.empty())
+        return false;
+
+    str_to_lower(dictionary_name);
+    str_to_lower(copying_dictionary_name);
+
+    std::vector<char> saved_data;
+
+    // ищем есть ли вообще coping_dictionary_name (начинаем с map)
+    auto it = opened_dicts_.find(copying_dictionary_name);
+    if (it != opened_dicts_.end()) {	// значит нашли
+        if (it->second.dict_ptr->GetReadyData(saved_data) == false)
+            return false;	// ошибка получения данных
+
+    }
+    else {	// значит не нашли => ищем по файлам
+        EasyMenu_Dictionary* tmp_ptr = new EasyMenu_Dictionary(copying_dictionary_name);
+        if (tmp_ptr->ReadReadyData() == false) {	// не нашли файл/ошибка чтения
+            delete tmp_ptr;
+
+            return false;
+        }
+
+        if (tmp_ptr->GetReadyData(saved_data) == false) { // ошибка получения данных
+            delete tmp_ptr;
+
+            return false;
+        }
+
+        delete tmp_ptr;
+    }
+
+    // дошли сюда => данные для копировния сохранены (saved_data) => дальше ищем dictionary_name в map (открытых)
+    it = opened_dicts_.find(dictionary_name);
+    if (it != opened_dicts_.end()) {	// нашли в map
+        it->second.count++;
+        opened_dict_ptr_ = it->second.dict_ptr;
+
+        it->second.dict_ptr->DeleteData();	// очистили ОЗУ в словаре
+        if (it->second.dict_ptr->ReadFromCharData(saved_data) == false)
+            return false;	// не смогли записать (остались пред данные)
+
+        it->second.dict_ptr->SaveReadyData();	// сохранили словарь
+
+        return true;
+    }
+
+    // в map не оказалось => просто сохраняем (в файл)
+    EasyMenu_Dictionary* tmp_ptr = new EasyMenu_Dictionary(dictionary_name);
+    if (tmp_ptr->ReadFromCharData(saved_data) == false) {	// не удалось прочитать сохранение
+        delete tmp_ptr;
+
+        return false;
+    }
+
+    if (tmp_ptr->SaveReadyData() == false) {	// не удалось сохранить 
+        delete tmp_ptr;
+
+        return false;
+    }
+
+    // успешно сохранили => добавляем в map
+    DictData tmp_data;
+    tmp_data.count = 1;
+    tmp_data.dict_ptr = tmp_ptr;
+
+    opened_dicts_.emplace(dictionary_name, tmp_data);
+    opened_dict_ptr_ = tmp_ptr;
+
+    return true;
+}
+
+bool EasyDict::close() {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    // тперь ищем в map
+    std::string dictionary_name = opened_dict_ptr_->dictionary_name_;
+    auto it = opened_dicts_.find(dictionary_name);
+
+    if (it == opened_dicts_.end())
+        return false;
+
+    if ((--(it->second.count)) == 0) {
+        // больше никто не ссылается на этот словарь - очищаем ОЗУ
+        delete it->second.dict_ptr;
+        opened_dicts_.erase(it);
+    }
+
+    opened_dict_ptr_ = nullptr;
+
+    return true;
+}
+
+bool EasyDict::is_open() {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    return true;
+}
+
+bool EasyDict::is_need_compile() {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    return opened_dict_ptr_->is_need_compile_;
+}
+
+std::string EasyDict::get_open_name() {
+    if (opened_dict_ptr_ == nullptr)
+        return "";
+
+    return opened_dict_ptr_->dictionary_name_;
+}
+
+bool EasyDict::save() {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    return opened_dict_ptr_->SaveReadyData();
+}
+
+bool EasyDict::save_via_char(std::vector<char>& char_vector) {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    return opened_dict_ptr_->GetReadyData(char_vector);
+}
+
+bool EasyDict::save_via_csv() {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    return opened_dict_ptr_->ExportViaCSV();
+}
+
+bool EasyDict::compile() {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    opened_dict_ptr_->compile_prefix_dicts();
+
+    return true;
+}
+
+std::string EasyDict::predict_word(std::string prefix) {
+    if (opened_dict_ptr_ == nullptr)
+        return "";
+
+    return opened_dict_ptr_->PredictWord(prefix);
+}
+
+std::string EasyDict::predict_last_path(std::string prefix) {
+    if (opened_dict_ptr_ == nullptr)
+        return "";
+
+    return opened_dict_ptr_->PredictLastParthOfWord(prefix);
+}
+
+std::string EasyDict::predict_last_path_offset_up(std::string prefix) {
+    if (opened_dict_ptr_ == nullptr)
+        return "";
+
+    return opened_dict_ptr_->ChangeOffsetParth(prefix, true);
+}
+
+std::string EasyDict::predict_last_path_offset_down(std::string prefix) {
+    if (opened_dict_ptr_ == nullptr)
+        return "";
+
+    return opened_dict_ptr_->ChangeOffsetParth(prefix, false);
+}
+
+bool EasyDict::enter_words(std::string words_str) {
+    if (opened_dict_ptr_ == nullptr)
+        return false;
+
+    std::vector<std::string> words = split_words(words_str);
+
+    for (uint32_t i{ 0 }; i < words.size(); i++) {
+        if (opened_dict_ptr_->EnterWord(words[i]) == false)
+            return false;
+    }
+
+    return true;
+}
