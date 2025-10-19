@@ -1208,6 +1208,14 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
             else
                 std::cout << symbol;
             inn_pointer++;
+
+            if (dictionary_ptr_ != nullptr && is_secured_ == false && dictionary_ptr_->is_open() && count_of_mistakes == 0 && (last_predicted_path_ = dictionary_ptr_->predict_last_path(buffer_)).empty() == false) {
+                // нашли подсказку, выводим
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                std::cout << last_predicted_path_;
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+            }
         }
         else if (is_ban_not_allowed_ == false && symbol != ' ') {  // если общий блок выключен и это не (попавший в неразрешенный space)
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
@@ -1225,9 +1233,27 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                 switch (kb_numb) {
                 case ENTER_BUT: // ввод (как стрелочка вниз)
                     owner_ptr_->pointer_logic(&(owner_ptr_->pointer_), &(owner_ptr_->last_pointer_), owner_ptr_->count_of_buttons_, DOWN_POINTER_BUT);
+
+                    if (last_predicted_path_.empty() == false) {
+                        // очищаем старую подсказку (не в конце)
+                        owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                        for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                            std::cout << ' ';
+                        last_predicted_path_.clear();
+                    }
+
                     return;
                     break;
                 case ESC_BUT:   // выход 
+
+                    if (last_predicted_path_.empty() == false) {
+                        // очищаем старую подсказку (не в конце)
+                        owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                        for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                            std::cout << ' ';
+                        last_predicted_path_.clear();
+                    }
+
                     return;
                     break;
                 case BACKSPACE_BUT: // удаляем 
@@ -1521,6 +1547,8 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                                 // ввели что смогли
                                 last_predicted_path_.clear();
                             }
+
+                            std::cout.flush();
                         }
                     }
                     break;
@@ -1530,12 +1558,60 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
                 switch (kb_numb)
                 {
                 case UP_POINTER_BUT:
-                    owner_ptr_->pointer_logic(&(owner_ptr_->pointer_), &(owner_ptr_->last_pointer_), owner_ptr_->count_of_buttons_, UP_POINTER_BUT);
-                    return;
+                    if (last_predicted_path_.empty()) {
+                        owner_ptr_->pointer_logic(&(owner_ptr_->pointer_), &(owner_ptr_->last_pointer_), owner_ptr_->count_of_buttons_, UP_POINTER_BUT);
+                        return;
+                    }
+                    else if (dictionary_ptr_ != nullptr) {  // значит используем трелочки для подсказок
+                        std::string str_buffer = dictionary_ptr_->predict_last_path_offset_up(buffer_);
+                        if (str_buffer.empty() == false) {   // нашли новую подсказку                           
+                            // очищаем старую подсказку (не в конце)
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                std::cout << ' ';
+                            
+                            last_predicted_path_ = str_buffer;
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+
+                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                            std::cout << last_predicted_path_;
+                            if (is_last_correct)
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                            else
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                            
+                            std::cout.flush();
+                        }
+                    }
                     break;
                 case DOWN_POINTER_BUT:
-                    owner_ptr_->pointer_logic(&(owner_ptr_->pointer_), &(owner_ptr_->last_pointer_), owner_ptr_->count_of_buttons_, DOWN_POINTER_BUT);
-                    return;
+                    if (last_predicted_path_.empty()) {
+                        owner_ptr_->pointer_logic(&(owner_ptr_->pointer_), &(owner_ptr_->last_pointer_), owner_ptr_->count_of_buttons_, DOWN_POINTER_BUT);
+                        return;
+                    }
+                    else if (dictionary_ptr_ != nullptr) {
+                        std::string str_buffer = dictionary_ptr_->predict_last_path_offset_down(buffer_);
+                        if (str_buffer.empty() == false) {   // нашли новую подсказку                           
+                            // очищаем старую подсказку (не в конце)
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+                            for (int i{ 0 }; i < last_predicted_path_.length(); i++)
+                                std::cout << ' ';
+
+                            last_predicted_path_ = str_buffer;
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + buffer_.length(), owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+
+                            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), DARK_GRAY_COLOR);
+                            std::cout << last_predicted_path_;
+                            if (is_last_correct)
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_correct_color_);
+                            else
+                                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), owner_ptr_->advanced_input_uncorrect_color_);
+                            owner_ptr_->go_to_xy(owner_ptr_->x_pos_ + ((owner_ptr_->is_pointer_on_ == true) ? owner_ptr_->pointer_str_.length() : 0) + 6 + 1 + owner_ptr_->buttons_data_vector_[owner_index].name.length() + 1 + inn_pointer, owner_ptr_->y_pos_ + owner_index + owner_ptr_->is_info_full_);
+
+                            std::cout.flush();
+                        }
+                    }
                     break;
                 case LEFT_POINTER_BUT:
                     if (inn_pointer > 0) {
@@ -2153,6 +2229,7 @@ std::string EasyMenu_Dictionary::PredictWord(const std::string& prefix_str) {	//
         if (it != prefix_dicts_[prefix_length - 1].end() && (*it)->word.compare(0, prefix_length, prefix, 0, prefix_length) == 0) {	// проверили не находитсчя ли итератор в конце (не нашли) и точно ли полученная строка начинается на префикс
             last_prefix_ = prefix;	// записали успешно найденное (самое популярное) слово из возможных
             last_prefix_index_ = std::distance(prefix_dicts_[prefix_length - 1].begin(), it);	// записали индекс этого слова, для возможности дальнейшего смещения
+            last_prefix_offset_ = 0;    // обнулили оффсет
             return (*it)->word;
         }
         else
@@ -2162,13 +2239,41 @@ std::string EasyMenu_Dictionary::PredictWord(const std::string& prefix_str) {	//
 }
 
 std::string EasyMenu_Dictionary::PredictLastParthOfWord(const std::string& prefix) {
-    string tmp_str = get_last_word(prefix);
+    if (prefix.empty())
+        return "";
+    
+    std::string tmp_str = get_last_word(prefix);
+
     std::string full_word = PredictWord(tmp_str);
 
     if (full_word.empty())
         return "";
 
     return full_word.substr(tmp_str.length());
+}
+
+std::string EasyMenu_Dictionary::ChangeOffsetParth(const std::string& prefix, bool is_up) {
+    if (prefix.empty())
+        return "";  // пустые данные
+
+    string tmp_str = get_last_word(prefix);
+    str_to_lower(tmp_str);
+
+    if (tmp_str != last_prefix_)
+        return "";  // не те данные для сдвига
+
+    if (is_up) {    // двигаемся вверх (-> более популярное)
+        if (last_prefix_offset_ > 0)  // к изначальному можем двигаться без проверок
+            return prefix_dicts_[tmp_str.length() - 1][last_prefix_index_ + (--last_prefix_offset_)]->word.substr(tmp_str.length());
+    }
+    else {  // двигаемся вниз (-> менее популярное)
+        if (prefix_dicts_[tmp_str.length() - 1][last_prefix_index_ + (++last_prefix_offset_)]->word.compare(0, tmp_str.length(), tmp_str) == 0)    // значит префиксы совпадают
+            return prefix_dicts_[tmp_str.length() - 1][last_prefix_index_ + last_prefix_offset_]->word.substr(tmp_str.length());
+        else // значит не совпало -> откатываем last_prefix_offset_
+            --last_prefix_offset_;
+    }
+
+    return ""; 
 }
 
 //---------------------------------------|
@@ -2541,6 +2646,20 @@ std::string EasyDict::predict_last_path(std::string prefix) {
         return "";
 
     return opened_dict_ptr_->PredictLastParthOfWord(prefix);
+}
+
+std::string EasyDict::predict_last_path_offset_up(std::string prefix) {
+    if (opened_dict_ptr_ == nullptr)
+        return "";
+
+    return opened_dict_ptr_->ChangeOffsetParth(prefix, true);
+}
+
+std::string EasyDict::predict_last_path_offset_down(std::string prefix) {
+    if (opened_dict_ptr_ == nullptr)
+        return "";
+
+    return opened_dict_ptr_->ChangeOffsetParth(prefix, false);
 }
 
 bool EasyDict::enter_words(std::string words_str) {

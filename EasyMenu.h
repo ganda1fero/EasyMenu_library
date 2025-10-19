@@ -295,6 +295,7 @@ private:
 
     mutable std::string last_prefix_;
     mutable uint32_t last_prefix_index_;
+    mutable uint32_t last_prefix_offset_;
 
     // методы
     EasyMenu_Dictionary();	// конструктор по умолчанию
@@ -328,6 +329,8 @@ public:
     // методы
     std::string PredictWord(const std::string& prefix);	// угадать ввод
     std::string PredictLastParthOfWord(const std::string& prefix);	// угадать недостающую часть слова
+
+    std::string ChangeOffsetParth(const std::string& prefix, bool is_up);
 };
 
 //-------------------------------------------------|
@@ -382,6 +385,8 @@ public:
 
     std::string predict_word(std::string prefix);
     std::string predict_last_path(std::string prefix);
+    std::string predict_last_path_offset_up(std::string prefix);
+    std::string predict_last_path_offset_down(std::string prefix);
     bool enter_words(std::string words_str);
 
     //bool remove();	// полное удаление (с файлами)
