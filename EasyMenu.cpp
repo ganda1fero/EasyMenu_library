@@ -1938,6 +1938,7 @@ bool EasyMenu_Dictionary::ReadReadyData() {
     max_word_length_ = tmp_max_word_length;
     is_need_compile_ = tmp_is_need_compile;
     main_dict_ = tmp_main_dict; // скопировали все указатели
+    additional_main_dict_ = tmp_additional_main_dict;   // копировали все указатели
     prefix_dicts_ = tmp_prefix_dict; // скопировали все векторы указателей
 
     return true;
@@ -2183,6 +2184,7 @@ bool EasyMenu_Dictionary::ReadFromCharData(const std::vector<char>& data) {
     max_word_length_ = tmp_max_word_length;
     is_need_compile_ = tmp_is_need_compile;
     main_dict_ = tmp_main_dict; // скопировали все указатели
+    additional_main_dict_ = tmp_addictional_dict; // скопировали все указатели
     prefix_dicts_ = tmp_prefix_dict; // скопировали все векторы указателей
 
     return true;
@@ -2341,7 +2343,7 @@ std::vector<std::string> EasyDict::split_words(const std::string& str) {
     uint32_t start = 0, end = 0;
 
     while (end < str.length()) {
-        while (start < str.length() && std::isspace(str[start])) {
+        while (start < str.length() && std::isspace(static_cast<unsigned char>(str[start]))) {
             start++;	// Пропускаем пробелы
         }
 
@@ -2349,7 +2351,7 @@ std::vector<std::string> EasyDict::split_words(const std::string& str) {
             break;
 
         end = start;
-        while (end < str.length() && std::isspace(str[end]) == false) {
+        while (end < str.length() && std::isspace(static_cast<unsigned char>(str[end])) == false) {
             end++;	// Находим конец слова
         }
 
@@ -2711,7 +2713,7 @@ std::string EasyDict::predict_last_path_offset_down(std::string prefix) {
     return opened_dict_ptr_->ChangeOffsetParth(prefix, false);
 }
 
-bool EasyDict::enter_words(std::string words_str) {
+bool EasyDict::enter_words(const std::string& words_str) {
     if (opened_dict_ptr_ == nullptr)
         return false;
 

@@ -387,7 +387,7 @@ public:
     std::string predict_last_path(std::string prefix);
     std::string predict_last_path_offset_up(std::string prefix);
     std::string predict_last_path_offset_down(std::string prefix);
-    bool enter_words(std::string words_str);
+    bool enter_words(const std::string& words_str);
 
     //bool remove();	// полное удаление (с файлами)
 };
