@@ -1223,6 +1223,7 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
             buffer_.push_back(symbol);
             std::cout << symbol;
             inn_pointer++;
+            count_of_mistakes++;
         }
         std::cout.flush();
     }
