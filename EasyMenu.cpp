@@ -1795,6 +1795,18 @@ bool EasyMenu_Dictionary::SaveReadyData() {
         file.write(reinterpret_cast<char*>(&main_dict_[i]->popularity), sizeof(main_dict_[i]->popularity));
     }
 
+    uint32_t_buffer = additional_main_dict_.size();
+    file.write(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+
+    for (uint32_t i{ 0 }; i < additional_main_dict_.size(); i++) {
+        uint32_t_buffer = additional_main_dict_[i]->word.length();
+        file.write(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+        
+        file.write(additional_main_dict_[i]->word.data(), uint32_t_buffer);
+
+        file.write(reinterpret_cast<char*>(&additional_main_dict_[i]->popularity), sizeof(additional_main_dict_[i]->popularity));
+    }
+
     uint32_t_buffer = prefix_dicts_.size();
     file.write(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
 
@@ -1841,6 +1853,7 @@ bool EasyMenu_Dictionary::ReadReadyData() {
     uint32_t tmp_max_word_length;
     bool tmp_is_need_compile;
     std::vector<Dictionary_note*> tmp_main_dict;
+    std::vector<Dictionary_note*> tmp_additional_main_dict;
     std::vector<std::vector<Dictionary_note*>> tmp_prefix_dict;
     try {
         // начинаем читать
@@ -1867,6 +1880,20 @@ bool EasyMenu_Dictionary::ReadReadyData() {
             file.read(&tmp_main_dict[i]->word[0], tmp_main_dict[i]->word.size());
 
             file.read(reinterpret_cast<char*>(&tmp_main_dict[i]->popularity), sizeof(tmp_main_dict[i]->popularity));
+        }
+
+        file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+        tmp_additional_main_dict.resize(uint32_t_buffer);
+
+        for (uint32_t i{ 0 }; i < tmp_additional_main_dict.size(); i++) {
+            tmp_additional_main_dict[i] = new Dictionary_note;
+
+            file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+            
+            tmp_additional_main_dict[i]->word.resize(uint32_t_buffer);
+            file.read(&tmp_additional_main_dict[i]->word[0], tmp_additional_main_dict[i]->word.size());
+
+            file.read(reinterpret_cast<char*>(&tmp_additional_main_dict[i]->popularity), sizeof(tmp_additional_main_dict[i]->popularity));
         }
 
         file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
@@ -2064,6 +2091,7 @@ bool EasyMenu_Dictionary::ReadFromCharData(const std::vector<char>& data) {
     uint32_t tmp_max_word_length;
     bool tmp_is_need_compile;
     std::vector<Dictionary_note*> tmp_main_dict;
+    std::vector<Dictionary_note*> tmp_addictional_dict;
     std::vector<std::vector<Dictionary_note*>> tmp_prefix_dict;
 
     // начинаем само чтение
@@ -2100,6 +2128,26 @@ bool EasyMenu_Dictionary::ReadFromCharData(const std::vector<char>& data) {
 
             tmp_main_dict[i]->popularity = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
             data_index += sizeof(tmp_main_dict[i]->popularity);
+        }
+
+        uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+        data_index += sizeof(uint32_t_buffer);
+        tmp_addictional_dict.resize(uint32_t_buffer);
+
+        for (uint32_t i{ 0 }; i < tmp_addictional_dict.size(); i++) {
+            tmp_addictional_dict[i] = new Dictionary_note;
+
+            uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+            data_index += sizeof(uint32_t_buffer);
+
+            tmp_addictional_dict[i]->word.resize(uint32_t_buffer);
+            for (uint32_t g{ 0 }; g < tmp_addictional_dict[i]->word.size(); g++) {
+                tmp_addictional_dict[i]->word[g] = data[data_index];
+                data_index++;
+            }
+
+            tmp_addictional_dict[i]->popularity = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+            data_index += sizeof(tmp_addictional_dict[i]->popularity);
         }
 
         uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
