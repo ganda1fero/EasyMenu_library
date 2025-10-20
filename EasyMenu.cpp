@@ -1223,6 +1223,7 @@ void EasyMenu::ButtData::AdvancedCIN::run_cin_background(char symbol, int32_t ow
             buffer_.push_back(symbol);
             std::cout << symbol;
             inn_pointer++;
+            count_of_mistakes++;
         }
         std::cout.flush();
     }
@@ -1794,6 +1795,18 @@ bool EasyMenu_Dictionary::SaveReadyData() {
         file.write(reinterpret_cast<char*>(&main_dict_[i]->popularity), sizeof(main_dict_[i]->popularity));
     }
 
+    uint32_t_buffer = additional_main_dict_.size();
+    file.write(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+
+    for (uint32_t i{ 0 }; i < additional_main_dict_.size(); i++) {
+        uint32_t_buffer = additional_main_dict_[i]->word.length();
+        file.write(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+        
+        file.write(additional_main_dict_[i]->word.data(), uint32_t_buffer);
+
+        file.write(reinterpret_cast<char*>(&additional_main_dict_[i]->popularity), sizeof(additional_main_dict_[i]->popularity));
+    }
+
     uint32_t_buffer = prefix_dicts_.size();
     file.write(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
 
@@ -1840,6 +1853,7 @@ bool EasyMenu_Dictionary::ReadReadyData() {
     uint32_t tmp_max_word_length;
     bool tmp_is_need_compile;
     std::vector<Dictionary_note*> tmp_main_dict;
+    std::vector<Dictionary_note*> tmp_additional_main_dict;
     std::vector<std::vector<Dictionary_note*>> tmp_prefix_dict;
     try {
         // начинаем читать
@@ -1866,6 +1880,20 @@ bool EasyMenu_Dictionary::ReadReadyData() {
             file.read(&tmp_main_dict[i]->word[0], tmp_main_dict[i]->word.size());
 
             file.read(reinterpret_cast<char*>(&tmp_main_dict[i]->popularity), sizeof(tmp_main_dict[i]->popularity));
+        }
+
+        file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+        tmp_additional_main_dict.resize(uint32_t_buffer);
+
+        for (uint32_t i{ 0 }; i < tmp_additional_main_dict.size(); i++) {
+            tmp_additional_main_dict[i] = new Dictionary_note;
+
+            file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
+            
+            tmp_additional_main_dict[i]->word.resize(uint32_t_buffer);
+            file.read(&tmp_additional_main_dict[i]->word[0], tmp_additional_main_dict[i]->word.size());
+
+            file.read(reinterpret_cast<char*>(&tmp_additional_main_dict[i]->popularity), sizeof(tmp_additional_main_dict[i]->popularity));
         }
 
         file.read(reinterpret_cast<char*>(&uint32_t_buffer), sizeof(uint32_t_buffer));
@@ -1910,6 +1938,7 @@ bool EasyMenu_Dictionary::ReadReadyData() {
     max_word_length_ = tmp_max_word_length;
     is_need_compile_ = tmp_is_need_compile;
     main_dict_ = tmp_main_dict; // скопировали все указатели
+    additional_main_dict_ = tmp_additional_main_dict;   // копировали все указатели
     prefix_dicts_ = tmp_prefix_dict; // скопировали все векторы указателей
 
     return true;
@@ -2063,6 +2092,7 @@ bool EasyMenu_Dictionary::ReadFromCharData(const std::vector<char>& data) {
     uint32_t tmp_max_word_length;
     bool tmp_is_need_compile;
     std::vector<Dictionary_note*> tmp_main_dict;
+    std::vector<Dictionary_note*> tmp_addictional_dict;
     std::vector<std::vector<Dictionary_note*>> tmp_prefix_dict;
 
     // начинаем само чтение
@@ -2103,6 +2133,26 @@ bool EasyMenu_Dictionary::ReadFromCharData(const std::vector<char>& data) {
 
         uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
         data_index += sizeof(uint32_t_buffer);
+        tmp_addictional_dict.resize(uint32_t_buffer);
+
+        for (uint32_t i{ 0 }; i < tmp_addictional_dict.size(); i++) {
+            tmp_addictional_dict[i] = new Dictionary_note;
+
+            uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+            data_index += sizeof(uint32_t_buffer);
+
+            tmp_addictional_dict[i]->word.resize(uint32_t_buffer);
+            for (uint32_t g{ 0 }; g < tmp_addictional_dict[i]->word.size(); g++) {
+                tmp_addictional_dict[i]->word[g] = data[data_index];
+                data_index++;
+            }
+
+            tmp_addictional_dict[i]->popularity = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+            data_index += sizeof(tmp_addictional_dict[i]->popularity);
+        }
+
+        uint32_t_buffer = *(reinterpret_cast<const uint32_t*>(&data[data_index]));
+        data_index += sizeof(uint32_t_buffer);
         tmp_prefix_dict.resize(uint32_t_buffer);	// именно resize
 
         for (uint32_t i{ 0 }; i < tmp_prefix_dict.size(); i++) {
@@ -2134,6 +2184,7 @@ bool EasyMenu_Dictionary::ReadFromCharData(const std::vector<char>& data) {
     max_word_length_ = tmp_max_word_length;
     is_need_compile_ = tmp_is_need_compile;
     main_dict_ = tmp_main_dict; // скопировали все указатели
+    additional_main_dict_ = tmp_addictional_dict; // скопировали все указатели
     prefix_dicts_ = tmp_prefix_dict; // скопировали все векторы указателей
 
     return true;
@@ -2292,7 +2343,7 @@ std::vector<std::string> EasyDict::split_words(const std::string& str) {
     uint32_t start = 0, end = 0;
 
     while (end < str.length()) {
-        while (start < str.length() && std::isspace(str[start])) {
+        while (start < str.length() && std::isspace(static_cast<unsigned char>(str[start]))) {
             start++;	// Пропускаем пробелы
         }
 
@@ -2300,7 +2351,7 @@ std::vector<std::string> EasyDict::split_words(const std::string& str) {
             break;
 
         end = start;
-        while (end < str.length() && std::isspace(str[end]) == false) {
+        while (end < str.length() && std::isspace(static_cast<unsigned char>(str[end])) == false) {
             end++;	// Находим конец слова
         }
 
@@ -2662,7 +2713,7 @@ std::string EasyDict::predict_last_path_offset_down(std::string prefix) {
     return opened_dict_ptr_->ChangeOffsetParth(prefix, false);
 }
 
-bool EasyDict::enter_words(std::string words_str) {
+bool EasyDict::enter_words(const std::string& words_str) {
     if (opened_dict_ptr_ == nullptr)
         return false;
 
