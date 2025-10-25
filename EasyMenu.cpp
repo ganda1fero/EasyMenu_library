@@ -2318,13 +2318,18 @@ std::string EasyMenu_Dictionary::ChangeOffsetParth(const std::string& prefix, bo
             return prefix_dicts_[tmp_str.length() - 1][last_prefix_index_ + (--last_prefix_offset_)]->word.substr(tmp_str.length());
     }
     else {  // двигаемся вниз (-> менее популярное)
-        if (prefix_dicts_[tmp_str.length() - 1][last_prefix_index_ + (++last_prefix_offset_)]->word.compare(0, tmp_str.length(), tmp_str) == 0)    // значит префиксы совпадают
-            return prefix_dicts_[tmp_str.length() - 1][last_prefix_index_ + last_prefix_offset_]->word.substr(tmp_str.length());
-        else // значит не совпало -> откатываем last_prefix_offset_
-            --last_prefix_offset_;
+        if (last_prefix_offset_ + last_prefix_index_ + 1 < prefix_dicts_[tmp_str.length() - 1].size()) {    // значит потанциально не выходим за предел
+            if (prefix_dicts_[tmp_str.length() - 1][last_prefix_index_ + (++last_prefix_offset_)]->word.compare(0, tmp_str.length(), tmp_str) == 0)    // значит префиксы совпадают
+                return prefix_dicts_[tmp_str.length() - 1][last_prefix_index_ + last_prefix_offset_]->word.substr(tmp_str.length());
+            else // значит не совпало -> откатываем last_prefix_offset_
+                --last_prefix_offset_;
+            
+        }
+        else
+            return "";  // (вышли за предел вектора)
     }
 
-    return ""; 
+    return "";  // заглушка для ошибок
 }
 
 //---------------------------------------|
@@ -2385,6 +2390,10 @@ EasyDict& EasyDict::operator=(const EasyDict& reference) {
 
 EasyDict::EasyDict() {
     opened_dict_ptr_ = nullptr;
+
+    std::setlocale(LC_ALL, "");
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
 }
 
 EasyDict::EasyDict(std::string dictionary_name) : EasyDict() {
