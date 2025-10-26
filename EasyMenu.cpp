@@ -962,6 +962,23 @@ int32_t EasyMenu::get_pointer_index(int32_t pointer_) {
     return NULL;
 }
 
+void EasyMenu::clear() {
+    pointer_ = 0;
+    last_pointer_ = -1;
+    count_of_buttons_ = 0;
+    count_of_lines_ = 0;
+    byte_system_ = -1;
+    kb_numb_ = -1;
+    info_ = "";
+    is_info_full_ = false;
+    is_need_screen_update_ = false;
+    is_butt_pressed_ = false;
+    is_need_pointer_update_ = false;
+    pressed_but_ = -1;
+
+    buttons_data_vector_.clear();
+}
+
 bool EasyMenu::is_checkbox(int32_t index) {
     if (index < 0 || index > count_of_lines_ - 1)
         return false;
