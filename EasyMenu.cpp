@@ -12,7 +12,7 @@
 #define LEFT_POINTER_BUT 75
 #define RIGHT_POINTER_BUT 77
 
-EasyMenu::EasyMenu() {
+EasyMenu::EasyMenu() : add(*this), edit(*this), clear(*this), notification(*this), style(*this), get(*this) {
     pointer_ = 0;
     pointer_str_ = "-->";
     pointer_space_ = "   ";
@@ -47,68 +47,438 @@ EasyMenu::EasyMenu() {
     SetConsoleOutputCP(1251);
 }
 
-EasyMenu::EasyMenu(string first_butt) : EasyMenu() {
+EasyMenu::EasyMenu(string button) : EasyMenu() {
     count_of_buttons_++;
     count_of_lines_++;
-    buttons_data_vector_.push_back(ButtData(first_butt, BUTTON, butt_color_));
+    buttons_data_vector_.push_back(ButtData(button, BUTTON, butt_color_));
 }
-
-EasyMenu::EasyMenu(string first_butt, string second_butt) : EasyMenu(first_butt) {
+EasyMenu::EasyMenu(string first_button, string second_button) : EasyMenu(first_button) {
     count_of_buttons_++;
     count_of_lines_++;
-    buttons_data_vector_.push_back(ButtData(second_butt, BUTTON, butt_color_));
+    buttons_data_vector_.push_back(ButtData(second_button, BUTTON, butt_color_));
+}
+EasyMenu::EasyMenu(vector<string> buttons) : EasyMenu() {
+    for (const string& button : buttons) {
+        buttons_data_vector_.push_back(ButtData(button, BUTTON, butt_color_));
+    }
+    count_of_buttons_ = buttons.size();
+    count_of_lines_ = buttons.size();
 }
 
-EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt) : EasyMenu(first_butt, second_butt) {
-    count_of_buttons_++;
-    count_of_lines_++;
-    buttons_data_vector_.push_back(ButtData(third_butt, BUTTON, butt_color_));
+// ----------- Хэндлеры
+EasyMenu::NotificationHandler::NotificationHandler(EasyMenu& m, int index) : m(m), index(index) {}
+EasyMenu::NotificationHandler& EasyMenu::NotificationHandler::notification(string new_notification) {
+    m.set_notification(index, new_notification);
+    return *this;
+}
+EasyMenu::NotificationHandler& EasyMenu::NotificationHandler::color(int color_id) {
+    m.set_notification_color(index, color_id);
+    return *this;
 }
 
-EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt) : EasyMenu(first_butt, second_butt, third_butt) {
-    count_of_buttons_++;
-    count_of_lines_++;
-    buttons_data_vector_.push_back(ButtData(fourth_butt, BUTTON, butt_color_));
+EasyMenu::ButtonHandle::ButtonHandle(EasyMenu& m, int index) : m(m), index(index) {}
+EasyMenu::ButtonHandle& EasyMenu::ButtonHandle::name(string new_name) {
+    m.edit_something(index, new_name);
+    return *this;
+}
+EasyMenu::ButtonHandle& EasyMenu::ButtonHandle::color(int color_id) {
+    m.set_color(index, color_id);
+    return *this;
+}
+EasyMenu::NotificationHandler EasyMenu::ButtonHandle::notification(string new_notification) {
+    m.set_notification(index, new_notification);
+    return NotificationHandler(m, index);
 }
 
-EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt) {
-    count_of_buttons_++;
-    count_of_lines_++;
-    buttons_data_vector_.push_back(ButtData(fifth_butt, BUTTON, butt_color_));
+EasyMenu::TextHandle::TextHandle(EasyMenu& m, int index) : m(m), index(index) {}
+EasyMenu::TextHandle& EasyMenu::TextHandle::text(string new_text) {
+    m.edit_something(index, new_text);
+    return *this;
+}
+EasyMenu::TextHandle& EasyMenu::TextHandle::color(int color_id) {
+    m.set_color(index, color_id);
+    return *this;
 }
 
-EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt, fifth_butt) {
-    count_of_buttons_++;
-    count_of_lines_++;
-    buttons_data_vector_.push_back(ButtData(sixth_butt, BUTTON, butt_color_));
+EasyMenu::CheckboxHandle::CheckboxHandle(EasyMenu& m, int index) : m(m), index(index) {}
+EasyMenu::CheckboxHandle& EasyMenu::CheckboxHandle::text(string new_text) {
+    m.edit_something(index, new_text);
+    return *this;
+}
+EasyMenu::CheckboxHandle& EasyMenu::CheckboxHandle::color(int color_id) {
+    m.set_color(index, color_id);
+    return *this;
+}
+EasyMenu::CheckboxHandle& EasyMenu::CheckboxHandle::state(bool new_state) {
+    m.set_checkbox_state(index, new_state);
+    return *this;
+}
+EasyMenu::NotificationHandler EasyMenu::CheckboxHandle::notification(string new_notification) {
+    m.set_notification(index, new_notification);
+    return NotificationHandler(m, index);
 }
 
-EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt, fifth_butt, sixth_butt) {
-    count_of_buttons_++;
-    count_of_lines_++;
-    buttons_data_vector_.push_back(ButtData(seventh_butt, BUTTON, butt_color_));
+EasyMenu::InputHandle::InputHandle(EasyMenu& m, int index) : m(m), index(index) {}
+EasyMenu::InputHandle& EasyMenu::InputHandle::name(string new_name) {
+    m.edit_something(index, new_name);
+    return *this;
+}
+EasyMenu::InputHandle& EasyMenu::InputHandle::name_color(int color_id) {
+    m.set_color(index, color_id);
+    return *this;
+}
+EasyMenu::InputHandle& EasyMenu::InputHandle::length(int new_length) {
+    m.set_advanced_cin_max_input_length(index, new_length);
+    return *this;
+}
+EasyMenu::InputHandle& EasyMenu::InputHandle::origional_text(string new_text) {
+    m.set_advanced_cin_original_text(index, new_text);
+    return *this;
+}
+EasyMenu::InputHandle& EasyMenu::InputHandle::allowed(string new_allowed) {
+    m.set_advanced_cin_new_allowed_chars(index, new_allowed);
+    return *this;
+}
+EasyMenu::InputHandle& EasyMenu::InputHandle::allowed(vector<char> new_allowed) {
+    m.set_advanced_cin_new_allowed_chars(index, new_allowed);
+    return *this;
+}
+EasyMenu::InputHandle& EasyMenu::InputHandle::filter(bool new_state) {
+    m.set_advanced_cin_ban_not_allowed(index, new_state);
+    return *this;
+}
+EasyMenu::InputHandle& EasyMenu::InputHandle::secure(bool new_state) {
+    m.set_advanced_cin_secure_input(index, new_state);
+    return *this;
+}
+EasyMenu::InputHandle& EasyMenu::InputHandle::dictionary(EasyDict* dictionary_ptr) {
+    m.set_advanced_cin_new_dictionary_ptr(index, dictionary_ptr);
+    return *this;
+}
+EasyMenu::NotificationHandler EasyMenu::InputHandle::notification(string new_notification) {
+    m.set_notification(index, new_notification);
+    return NotificationHandler(m, index);
 }
 
-EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt) {
-    count_of_buttons_++;
-    count_of_lines_++;
-    buttons_data_vector_.push_back(ButtData(eighth_butt, BUTTON, butt_color_));
+EasyMenu::ClearHandle::ClearHandle(EasyMenu& m) : m(m) {}
+EasyMenu::ClearHandle& EasyMenu::ClearHandle::text() {
+    m.delete_all_text();
+    return *this;
+}
+EasyMenu::ClearHandle& EasyMenu::ClearHandle::notifications() {
+    m.delete_all_notifications();
+    return *this;
+}
+EasyMenu::ClearHandle& EasyMenu::ClearHandle::info() {
+    m.delete_info();
+    return *this;
 }
 
-EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt, string ninth_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt, eighth_butt) {
-    count_of_buttons_++;
-    count_of_lines_++;
-    buttons_data_vector_.push_back(ButtData(ninth_butt, BUTTON, butt_color_));
+EasyMenu::Info_StyleHandle::Info_StyleHandle(EasyMenu& m) : m(m) {}
+EasyMenu::Info_StyleHandle& EasyMenu::Info_StyleHandle::add(string new_info) {
+    m.set_info(new_info);
+    return *this;
+}
+EasyMenu::Info_StyleHandle& EasyMenu::Info_StyleHandle::color(int color_id) {
+    m.set_info_main_color(color_id);
+    return *this;
+}
+EasyMenu::Info_StyleHandle& EasyMenu::Info_StyleHandle::remove() {
+    m.delete_info();
+    return *this;
 }
 
-EasyMenu::EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt, string ninth_butt, string tenth_butt) : EasyMenu(first_butt, second_butt, third_butt, fourth_butt, fifth_butt, sixth_butt, seventh_butt, eighth_butt, ninth_butt) {
-    count_of_buttons_++;
-    count_of_lines_++;
-    buttons_data_vector_.push_back(ButtData(tenth_butt, BUTTON, butt_color_));
+EasyMenu::BasicColor_StyleHandle::BasicColor_StyleHandle(EasyMenu& m) : m(m) {}
+EasyMenu::BasicColor_StyleHandle& EasyMenu::BasicColor_StyleHandle::button(int color_id) {
+    m.set_buttons_main_color(color_id);
+    return *this;
+}
+EasyMenu::BasicColor_StyleHandle& EasyMenu::BasicColor_StyleHandle::text(int color_id) {
+    m.set_text_main_color(color_id);
+    return *this;
+}
+EasyMenu::BasicColor_StyleHandle& EasyMenu::BasicColor_StyleHandle::checkbox(int color_id) {
+    m.set_checkbox_main_color(color_id);
+    return *this;
+}
+EasyMenu::BasicColor_StyleHandle& EasyMenu::BasicColor_StyleHandle::choise(int color_id) {
+    m.set_mark_choose_main_color(color_id);
+    return *this;
+}
+EasyMenu::BasicColor_StyleHandle& EasyMenu::BasicColor_StyleHandle::pointer(int color_id) {
+    m.set_pointer_main_color(color_id);
+    return *this;
+}
+EasyMenu::BasicColor_StyleHandle& EasyMenu::BasicColor_StyleHandle::correct_input(int color_id) {
+    m.set_advanced_cin_correct_color(color_id);
+    return *this;
+}
+EasyMenu::BasicColor_StyleHandle& EasyMenu::BasicColor_StyleHandle::uncorrect_input(int color_id) {
+    m.set_advanced_cin_uncorrect_color(color_id);
+    return *this;
 }
 
-int EasyMenu::easy_run() {
+EasyMenu::Settings_StyleHandle::Settings_StyleHandle(EasyMenu& m) : m(m) {}
+EasyMenu::Settings_StyleHandle& EasyMenu::Settings_StyleHandle::x_y_pos(int x, int y) {
+    m.set_x_y_position(x, y);
+    return *this;
+}
+EasyMenu::Settings_StyleHandle& EasyMenu::Settings_StyleHandle::choise(bool state) {
+    m.set_mark_choose(state);
+    return *this;
+}
+EasyMenu::Settings_StyleHandle& EasyMenu::Settings_StyleHandle::pointer(bool state) {
+    m.set_pointer(state);
+    return *this;
+}
+EasyMenu::Settings_StyleHandle& EasyMenu::Settings_StyleHandle::pointer_symbols(string new_pointer) {
+    m.set_new_pointer(new_pointer);
+    return *this;
+}
+
+// ----------- Под-объекты
+EasyMenu::AddAPI::AddAPI(EasyMenu& m) : m(m) {}
+EasyMenu::ButtonHandle EasyMenu::AddAPI::button(string name) {
+    m.push_back_butt(name);
+    return ButtonHandle(m, m.count_of_lines_ - 1);
+}
+EasyMenu::ButtonHandle EasyMenu::AddAPI::button(string name, int index) {
+    if (index < 0) {
+        index = 0;
+    }
+    else if (index > m.count_of_lines_ - 1) {
+        index = m.count_of_lines_ - 1;
+    }
+    m.insert_butt(index, name);
+    return ButtonHandle(m, index);
+}
+EasyMenu::TextHandle EasyMenu::AddAPI::text(string text) {
+    m.push_back_text(text);
+    return TextHandle(m, m.count_of_lines_ - 1);
+}
+EasyMenu::TextHandle EasyMenu::AddAPI::text(string text, int index) {
+    if (index < 0) {
+        index = 0;
+    }
+    else if (index > m.count_of_lines_ - 1) {
+        index = m.count_of_lines_ - 1;
+    }
+    m.insert_text(index, text);
+    return TextHandle(m, index);
+}
+EasyMenu::CheckboxHandle EasyMenu::AddAPI::checkbox(string text, bool state) {
+    m.push_back_checkbox(text, state);
+    return CheckboxHandle(m, m.count_of_lines_ - 1);
+}
+EasyMenu::CheckboxHandle EasyMenu::AddAPI::checkbox(string text, int index, bool state) {
+    if (index < 0) {
+        index = 0;
+    }
+    else if (index > m.count_of_lines_ - 1) {
+        index = m.count_of_lines_ - 1;
+    }
+    m.insert_checkbox(index, text, state);
+    return CheckboxHandle(m, index);
+}
+EasyMenu::InputHandle EasyMenu::AddAPI::input(string name, string original_text) {
+    m.push_back_advanced_cin(name, original_text);
+    return InputHandle(m, m.count_of_lines_ - 1);
+}
+EasyMenu::InputHandle EasyMenu::AddAPI::input(string name, int index, string original_text) {
+    if (index < 0) {
+        index = 0;
+    }
+    else if (index > m.count_of_lines_ - 1) {
+        index = m.count_of_lines_ - 1;
+    }
+    m.insert_advanced_cin(index, name, original_text);
+    return InputHandle(m, index);
+}
+
+EasyMenu::EditAPI::EditAPI(EasyMenu& m) : m(m) {}
+EasyMenu::ButtonHandle EasyMenu::EditAPI::button(int index) {
+    if (index < 0) {
+        index = 0;
+    }
+    else if (index > m.count_of_lines_ - 1) {
+        index = m.count_of_lines_ - 1;
+    }
+    return ButtonHandle(m, index);
+}
+EasyMenu::TextHandle EasyMenu::EditAPI::text(int index) {
+    if (index < 0) {
+        index = 0;
+    }
+    else if (index > m.count_of_lines_ - 1) {
+        index = m.count_of_lines_ - 1;
+    }
+    return TextHandle(m, index);
+}
+EasyMenu::CheckboxHandle EasyMenu::EditAPI::checkbox(int index) {
+    if (index < 0) {
+        index = 0;
+    }
+    else if (index > m.count_of_lines_ - 1) {
+        index = m.count_of_lines_ - 1;
+    }
+    return CheckboxHandle(m, index);
+}
+EasyMenu::InputHandle EasyMenu::EditAPI::input(int index) {
+    if (index < 0) {
+        index = 0;
+    }
+    else if (index > m.count_of_lines_ - 1) {
+        index = m.count_of_lines_ - 1;
+    }
+    return InputHandle(m, index);
+}
+
+EasyMenu::ClearAPI::ClearAPI(EasyMenu& m) : m(m) {}
+EasyMenu::ClearHandle EasyMenu::ClearAPI::text() {
+    m.delete_all_text();
+    return ClearHandle(m);
+}
+EasyMenu::ClearHandle EasyMenu::ClearAPI::notifications() {
+    m.delete_all_notifications();
+    return ClearHandle(m);
+}
+EasyMenu::ClearHandle EasyMenu::ClearAPI::info() {
+    m.delete_info();
+    return ClearHandle(m);
+}
+void EasyMenu::ClearAPI::all() {
+    m.clear_everything();
+}
+
+EasyMenu::NotificationAPI::NotificationAPI(EasyMenu& m) : m(m) {}
+EasyMenu::NotificationHandler EasyMenu::NotificationAPI::add(string new_notification, int index) {
+    if (index < 0) {
+        index = 0;
+    }
+    else if (index > m.count_of_lines_ - 1) {
+        index = m.count_of_lines_ - 1;
+    }
+    m.set_notification(index, new_notification);
+    return NotificationHandler(m, index);
+}
+EasyMenu::NotificationHandler EasyMenu::NotificationAPI::color(int index, int color_id) {
+    if (index < 0) {
+        index = 0;
+    }
+    else if (index > m.count_of_lines_ - 1) {
+        index = m.count_of_lines_ - 1;
+    }
+    m.set_notification_color(index, color_id);
+    return NotificationHandler(m, index);
+}
+EasyMenu::NotificationHandler EasyMenu::NotificationAPI::remove(int index) {
+    if (index < 0) {
+        index = 0;
+    }
+    else if (index > m.count_of_lines_ - 1) {
+        index = m.count_of_lines_ - 1;
+    }
+    m.delete_notification(index);
+    return NotificationHandler(m, index);
+}
+void EasyMenu::NotificationAPI::clear() {
+    m.delete_all_notifications();
+}
+
+EasyMenu::StyleAPI::StyleAPI(EasyMenu& m) : m(m), info(*this), basic_color(*this), settings(*this) {}
+
+EasyMenu::StyleAPI::Info_StyleAPI::Info_StyleAPI(StyleAPI& parent) : parent(parent) {}
+EasyMenu::Info_StyleHandle EasyMenu::StyleAPI::Info_StyleAPI::add(string new_info){
+    parent.m.set_info(new_info);
+    return Info_StyleHandle(parent.m);
+}
+EasyMenu::Info_StyleHandle EasyMenu::StyleAPI::Info_StyleAPI::color(int color_id) {
+    parent.m.set_info_main_color(color_id);
+    return Info_StyleHandle(parent.m);
+}
+EasyMenu::Info_StyleHandle EasyMenu::StyleAPI::Info_StyleAPI::remove() {
+    parent.m.delete_info();
+    return Info_StyleHandle(parent.m);
+}
+
+EasyMenu::StyleAPI::BasicColor_StyleAPI::BasicColor_StyleAPI(StyleAPI& parent) : parent(parent) {}
+EasyMenu::BasicColor_StyleHandle EasyMenu::StyleAPI::BasicColor_StyleAPI::button(int color_id) {
+    parent.m.set_buttons_main_color(color_id);
+    return BasicColor_StyleHandle(parent.m);
+}
+EasyMenu::BasicColor_StyleHandle EasyMenu::StyleAPI::BasicColor_StyleAPI::text(int color_id) {
+    parent.m.set_text_main_color(color_id);
+    return BasicColor_StyleHandle(parent.m);
+}
+EasyMenu::BasicColor_StyleHandle EasyMenu::StyleAPI::BasicColor_StyleAPI::checkbox(int color_id) {
+    parent.m.set_checkbox_main_color(color_id);
+    return BasicColor_StyleHandle(parent.m);
+}
+EasyMenu::BasicColor_StyleHandle EasyMenu::StyleAPI::BasicColor_StyleAPI::choise(int color_id) {
+    parent.m.set_mark_choose_main_color(color_id);
+    return BasicColor_StyleHandle(parent.m);
+}
+EasyMenu::BasicColor_StyleHandle EasyMenu::StyleAPI::BasicColor_StyleAPI::pointer(int color_id) {
+    parent.m.set_pointer_main_color(color_id);
+    return BasicColor_StyleHandle(parent.m);
+}
+EasyMenu::BasicColor_StyleHandle EasyMenu::StyleAPI::BasicColor_StyleAPI::correct_input(int color_id) {
+    parent.m.set_advanced_cin_correct_color(color_id);
+    return BasicColor_StyleHandle(parent.m);
+}
+EasyMenu::BasicColor_StyleHandle EasyMenu::StyleAPI::BasicColor_StyleAPI::uncorrect_input(int color_id) {
+    parent.m.set_advanced_cin_uncorrect_color(color_id);
+    return BasicColor_StyleHandle(parent.m);
+}
+
+EasyMenu::StyleAPI::Settings_StyleAPI::Settings_StyleAPI(StyleAPI& parent) : parent(parent) {}
+EasyMenu::Settings_StyleHandle EasyMenu::StyleAPI::Settings_StyleAPI::x_y_pos(int x, int y) {
+    parent.m.set_x_y_position(x, y);
+    return Settings_StyleHandle(parent.m);
+}
+EasyMenu::Settings_StyleHandle EasyMenu::StyleAPI::Settings_StyleAPI::choise(bool state) {
+    parent.m.set_mark_choose(state);
+    return Settings_StyleHandle(parent.m);
+}
+EasyMenu::Settings_StyleHandle EasyMenu::StyleAPI::Settings_StyleAPI::pointer(bool state) {
+    parent.m.set_pointer(state);
+    return Settings_StyleHandle(parent.m);
+}
+EasyMenu::Settings_StyleHandle EasyMenu::StyleAPI::Settings_StyleAPI::pointer_symbols(string new_pointer) {
+    parent.m.set_new_pointer(new_pointer);
+    return Settings_StyleHandle(parent.m);
+}
+
+EasyMenu::GetAPI::GetAPI(EasyMenu& m) : m(m) {}
+bool EasyMenu::GetAPI::checkbox(int index) {
+    return m.get_checkbox_status(index);
+}
+vector<bool> EasyMenu::GetAPI::checkbox() {
+    return m.get_all_checkbox_status();
+}
+string EasyMenu::GetAPI::input(int index) {
+    return m.get_advanced_cin_input(index);
+}
+vector<string> EasyMenu::GetAPI::input() {
+    return m.get_all_advacned_cin_input();
+}
+bool EasyMenu::GetAPI::input_error(int index) {
+    return m.is_advanced_cin_correct(index);
+}
+bool EasyMenu::GetAPI::input_error() {
+    return m.is_all_advanced_cin_correct();
+}
+
+// логика
+int EasyMenu::run() {
     return easy_run_background();
+}
+
+void EasyMenu::remove() {
+    pop_back();
+}
+void EasyMenu::remove(int index) {
+    delete_butt(index);
 }
 
 int32_t EasyMenu::easy_run_background() {
@@ -408,25 +778,10 @@ void EasyMenu::push_back_text(string text) {
     is_need_screen_update_ = true;
 }
 
-void EasyMenu::push_back_checkbox(string text) {
-    count_of_buttons_++;
-    count_of_lines_++;
-    buttons_data_vector_.push_back(ButtData(text, CHECKBOX, checkbox_color_));
-    is_need_screen_update_ = true;
-}
-
 void EasyMenu::push_back_checkbox(string text, bool is_activated) {
     count_of_buttons_++;
     count_of_lines_++;
     buttons_data_vector_.push_back(ButtData(text, CHECKBOX, checkbox_color_, is_activated));
-    is_need_screen_update_ = true;
-}
-
-void EasyMenu::push_back_advanced_cin(string name) {
-    buttons_data_vector_.push_back(ButtData(name, ADVANCED_INPUT, advanced_input_color_));
-    buttons_data_vector_[count_of_lines_].advanced_cin.set_owner(this);
-    count_of_buttons_++;
-    count_of_lines_++;
     is_need_screen_update_ = true;
 }
 
@@ -473,24 +828,6 @@ void EasyMenu::insert_text(int32_t index, string text) {
     return;
 }
 
-void EasyMenu::insert_checkbox(int32_t index, string text) {
-    if (index < 0) {
-        index = 0;
-    }
-    else if (index > count_of_lines_ - 1) {
-        buttons_data_vector_.push_back(ButtData(text, CHECKBOX, checkbox_color_));
-        count_of_buttons_++;
-        count_of_lines_++;
-        is_need_screen_update_ = true;
-        return;
-    }
-    buttons_data_vector_.insert(buttons_data_vector_.begin() + index, ButtData(text, CHECKBOX, checkbox_color_));
-    count_of_buttons_++;
-    count_of_lines_++;
-    is_need_screen_update_ = true;
-    return;
-}
-
 void EasyMenu::insert_checkbox(int32_t index, string text, bool is_activated) {
     if (index < 0) {
         index = 0;
@@ -503,26 +840,6 @@ void EasyMenu::insert_checkbox(int32_t index, string text, bool is_activated) {
         return;
     }
     buttons_data_vector_.insert(buttons_data_vector_.begin() + index, ButtData(text, CHECKBOX, checkbox_color_, is_activated));
-    count_of_buttons_++;
-    count_of_lines_++;
-    is_need_screen_update_ = true;
-    return;
-}
-
-void EasyMenu::insert_advanced_cin(int32_t index, string name) {
-    if (index < 0) {
-        index = 0;
-    }
-    else if (index > count_of_lines_ - 1) {
-        buttons_data_vector_.push_back(ButtData(name, ADVANCED_INPUT, advanced_input_color_));
-        buttons_data_vector_.back().advanced_cin.set_owner(this);
-        count_of_buttons_++;
-        count_of_lines_++;
-        is_need_screen_update_ = true;
-        return;
-    }
-    buttons_data_vector_.insert(buttons_data_vector_.begin() + index, ButtData(name, ADVANCED_INPUT, advanced_input_color_));
-    buttons_data_vector_[index].advanced_cin.set_owner(this);
     count_of_buttons_++;
     count_of_lines_++;
     is_need_screen_update_ = true;
@@ -660,6 +977,26 @@ void EasyMenu::set_advanced_cin_new_dictionary_ptr(int32_t index, EasyDict* dict
     return;
 }
 
+void EasyMenu::set_advanced_cin_original_text(int index, string new_text) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return;
+    if (buttons_data_vector_[index].type == ADVANCED_INPUT) {
+        buttons_data_vector_[index].advanced_cin.set_text(new_text);
+    }
+}
+
+void EasyMenu::set_checkbox_state(int index, bool new_state) {
+    if (index < 0 || index > count_of_lines_ - 1)
+        return;
+    if (buttons_data_vector_[index].type == CHECKBOX) {
+        if (buttons_data_vector_[index].is_activated != new_state) {
+            is_need_screen_update_ = true;
+        }
+        buttons_data_vector_[index].is_activated = new_state;
+    }
+    return;
+}
+
 void EasyMenu::set_advanced_cin_new_allowed_chars(int32_t index, std::string new_chars) {
     if (index < 0 || index > count_of_lines_ - 1)
         return;
@@ -670,8 +1007,12 @@ void EasyMenu::set_advanced_cin_new_allowed_chars(int32_t index, std::string new
 
 void EasyMenu::set_info(string new_info) {
     info_ = new_info;
-    if (new_info.length() > 0)
+    if (new_info.length() > 0) {
         is_info_full_ = true;
+    }
+    else {
+        is_info_full_ = false;
+    }
 }
 
 void EasyMenu::set_notification(int32_t index, string new_notification) {
@@ -707,16 +1048,11 @@ void EasyMenu::set_info_main_color(int32_t color_id) {
     is_need_screen_update_ = true;
 }
 
-void EasyMenu::set_mark_choose_on() {
-    if (!mark_choose_)
+void EasyMenu::set_mark_choose(bool state) {
+    if (mark_choose_ != state) {
         is_need_screen_update_ = true;
-    mark_choose_ = true;
-}
-
-void EasyMenu::set_mark_choose_off() {
-    if (mark_choose_)
-        is_need_screen_update_ = true;
-    mark_choose_ = false;
+        mark_choose_ = state;
+    }
 }
 
 bool EasyMenu::get_mark_choose_status() {
@@ -737,7 +1073,7 @@ void EasyMenu::set_text_main_color(int32_t color_id) {
     is_need_screen_update_ = true;
 }
 
-void EasyMenu::edit(int32_t index, string new_text) {
+void EasyMenu::edit_something(int32_t index, string new_text) {
     if (index >= 0 && index < count_of_lines_) {
         buttons_data_vector_[index].name = new_text;
         is_need_screen_update_ = true;
@@ -786,52 +1122,38 @@ void EasyMenu::delete_all_text() {
     return;
 }
 
-void EasyMenu::set_pointer_on() {
-    if (!is_pointer_on_)
+void EasyMenu::set_pointer(bool state) {
+    if (is_pointer_on_ != state) {
         is_need_screen_update_ = true;
-    is_pointer_on_ = true;
+        is_pointer_on_ = state;
+    }
 }
 
-void EasyMenu::set_pointer_off() {
-    if (is_pointer_on_)
-        is_need_screen_update_ = true;
-    is_pointer_on_ = false;
-}
-
-void EasyMenu::set_advanced_cin_ban_not_allowed_on(int32_t index) {
+void EasyMenu::set_advanced_cin_ban_not_allowed(int32_t index, bool state) {
     if (index < 0 || index > count_of_lines_)
         return;
     if (buttons_data_vector_[index].type != ADVANCED_INPUT)
         return;
-    buttons_data_vector_[index].advanced_cin.ban_not_allowed_on();
-    return;
+    if (state) {
+        buttons_data_vector_[index].advanced_cin.ban_not_allowed_on();
+    }
+    else {
+        buttons_data_vector_[index].advanced_cin.ban_not_allowed_off();
+    }
+    
 }
 
-void EasyMenu::set_advanced_cin_ban_not_allowed_off(int32_t index) {
+void EasyMenu::set_advanced_cin_secure_input(int32_t index, bool state) {
     if (index < 0 || index > count_of_lines_)
         return;
     if (buttons_data_vector_[index].type != ADVANCED_INPUT)
         return;
-    buttons_data_vector_[index].advanced_cin.ban_not_allowed_off();
-    return;
-}
-
-void EasyMenu::set_advanced_cin_secure_input_on(int32_t index) {
-    if (index < 0 || index > count_of_lines_)
-        return;
-    if (buttons_data_vector_[index].type != ADVANCED_INPUT)
-        return;
-    buttons_data_vector_[index].advanced_cin.secure_input_on();
-    return;
-}
-
-void EasyMenu::set_advanced_cin_secure_input_off(int32_t index) {
-    if (index < 0 || index > count_of_lines_)
-        return;
-    if (buttons_data_vector_[index].type != ADVANCED_INPUT)
-        return;
-    buttons_data_vector_[index].advanced_cin.secure_input_off();
-    return;
+    if (state) {
+        buttons_data_vector_[index].advanced_cin.secure_input_on();
+    }
+    else {
+        buttons_data_vector_[index].advanced_cin.secure_input_off();
+    }
 }
 
 void EasyMenu::set_new_pointer(string new_pointer) {
@@ -960,6 +1282,23 @@ int32_t EasyMenu::get_pointer_index(int32_t pointer_) {
             return i;   // возвращаем нужный индекс 
     }
     return NULL;
+}
+
+void EasyMenu::clear_everything() {
+    pointer_ = 0;
+    last_pointer_ = -1;
+    count_of_buttons_ = 0;
+    count_of_lines_ = 0;
+    byte_system_ = -1;
+    kb_numb_ = -1;
+    info_ = "";
+    is_info_full_ = false;
+    is_need_screen_update_ = false;
+    is_butt_pressed_ = false;
+    is_need_pointer_update_ = false;
+    pressed_but_ = -1;
+
+    buttons_data_vector_.clear();
 }
 
 bool EasyMenu::is_checkbox(int32_t index) {
