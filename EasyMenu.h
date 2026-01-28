@@ -36,96 +36,6 @@ using std::string;
 using std::vector;
 
 class EasyMenu {
-public:
-    int easy_run();
-
-    void advanced_tick();
-    void advanced_display_menu();
-    bool advanced_is_pressed();
-    int advanced_pressed_butt();
-    void advanced_clear_console();
-    void advanced_optimization_on();
-    void advanced_optimization_off();
-
-    void push_back_butt(string butt_name);
-    void push_back_text(string text);
-    void push_back_checkbox(string text);
-    void push_back_checkbox(string text, bool is_activated);
-    void push_back_advanced_cin(string name);
-    void push_back_advanced_cin(string name, string original_text);
-
-    void insert_butt(int32_t index, string butt_name);
-    void insert_text(int32_t index, string text);
-    void insert_checkbox(int32_t index, string text);
-    void insert_checkbox(int32_t index, string text, bool is_activated);
-    void insert_advanced_cin(int32_t index, string name);
-    void insert_advanced_cin(int32_t index, string name, string original_text);
-
-    void edit(int32_t index, string new_text);
-
-    void pop_back();
-    void delete_butt(int32_t index);
-    void delete_all_text();
-    void delete_notification(int32_t index);
-    void delete_all_notifications();
-    void set_info(string new_info);
-    void set_notification(int32_t index, string new_notification);
-    void delete_info();
-
-    void set_color(int32_t index, int32_t color_id);
-    void set_notification_color(int32_t index, int32_t color_id);
-    void set_buttons_main_color(int32_t color_id);
-    void set_pointer_main_color(int32_t color_id);
-    void set_info_main_color(int32_t color_id);
-    void set_mark_choose_main_color(int32_t color_id);
-    void set_text_main_color(int32_t color_id);
-    void set_checkbox_main_color(int32_t color_id);
-    void set_advanced_cin_correct_color(int32_t color_id);
-    void set_advanced_cin_uncorrect_color(int32_t color_id);
-    void set_advanced_cin_max_input_length(int32_t index, int32_t max_length);
-    void set_advanced_cin_new_allowed_chars(int32_t index, std::vector<char> new_chars);
-    void set_advanced_cin_new_allowed_chars(int32_t index, std::string new_chars);
-    void set_advanced_cin_new_dictionary_ptr(int32_t index, EasyDict* dictionary_ptr);
-
-    void set_x_y_position(int32_t x, int32_t y);
-    void set_mark_choose_on();
-    void set_mark_choose_off();
-    void set_new_pointer(string new_pointer);
-    void set_pointer_off();
-    void set_pointer_on();
-    void set_advanced_cin_ban_not_allowed_on(int32_t index);
-    void set_advanced_cin_ban_not_allowed_off(int32_t index);
-    void set_advanced_cin_secure_input_on(int32_t index);
-    void set_advanced_cin_secure_input_off(int32_t index);
-
-    int32_t get_color(int32_t index);
-    bool get_mark_choose_status();
-    bool get_pointer_status();
-    bool get_optimization_status();
-    bool get_checkbox_status(int32_t index);
-    std::vector<bool> get_all_checkbox_status();
-    std::string get_advanced_cin_input(int32_t index);
-    std::vector<string> get_all_advacned_cin_input();
-
-    bool is_checkbox(int32_t index);
-    bool is_advanced_cin(int32_t index);
-    bool is_advanced_cin_correct(int32_t index);
-    bool is_all_advanced_cin_correct();
-
-    EasyMenu();
-    EasyMenu(string first_butt);
-    EasyMenu(string first_butt, string second_butt);
-    EasyMenu(string first_butt, string second_butt, string third_butt);
-    EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt);
-    EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt);
-    EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt);
-    EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt);
-    EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt);
-    EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt, string ninth_butt);
-    EasyMenu(string first_butt, string second_butt, string third_butt, string fourth_butt, string fifth_butt, string sixth_butt, string seventh_butt, string eighth_butt, string ninth_butt, string tenth_butt);
-
-    void clear();
-
 private:
     // возможные типы кнопок меню
     #define BUTTON 1
@@ -266,6 +176,305 @@ private:
     int32_t get_pointer_index(int32_t pointer_);
 
     friend class AdvancedCIN;
+
+    // методы (раньше были фасадными)
+    void advanced_tick();
+    void advanced_display_menu();
+    bool advanced_is_pressed();
+    int advanced_pressed_butt();
+    void advanced_clear_console();
+    void advanced_optimization_on();
+    void advanced_optimization_off();
+
+    void push_back_butt(string butt_name);  // X
+    void push_back_text(string text);   // X
+    void push_back_checkbox(string text, bool is_activated);    // X
+    void push_back_advanced_cin(string name, string original_text); // X
+
+    void insert_butt(int32_t index, string butt_name);  // X
+    void insert_text(int32_t index, string text);   // X
+    void insert_checkbox(int32_t index, string text, bool is_activated);    // X
+    void insert_advanced_cin(int32_t index, string name, string original_text); // X
+
+    void edit_something(int32_t index, string new_text);  // X
+
+    void pop_back();    // X
+    void delete_butt(int32_t index);    // X
+    void delete_all_text(); // X
+    void delete_notification(int32_t index);    // X
+    void delete_all_notifications();    // X
+    void set_info(string new_info); // X
+    void set_notification(int32_t index, string new_notification);  // X
+    void delete_info(); // X
+
+    void set_color(int32_t index, int32_t color_id);    // X
+    void set_notification_color(int32_t index, int32_t color_id);   // X
+    void set_buttons_main_color(int32_t color_id);  // X
+    void set_pointer_main_color(int32_t color_id);  // X
+    void set_info_main_color(int32_t color_id); // X
+    void set_mark_choose_main_color(int32_t color_id);  // X
+    void set_text_main_color(int32_t color_id); // X
+    void set_checkbox_main_color(int32_t color_id); // X
+    void set_advanced_cin_correct_color(int32_t color_id);  // X
+    void set_advanced_cin_uncorrect_color(int32_t color_id);    // X
+    void set_advanced_cin_max_input_length(int32_t index, int32_t max_length);  // X
+    void set_advanced_cin_new_allowed_chars(int32_t index, std::vector<char> new_chars);    // X
+    void set_advanced_cin_new_allowed_chars(int32_t index, std::string new_chars);  // X
+    void set_advanced_cin_new_dictionary_ptr(int32_t index, EasyDict* dictionary_ptr);  // X
+    void set_advanced_cin_original_text(int index, string new_text);    // X
+    void set_checkbox_state(int index, bool new_state);     // X
+
+    void set_x_y_position(int32_t x, int32_t y);    // X
+    void set_mark_choose(bool state);  // X
+    void set_new_pointer(string new_pointer);   // X
+    void set_pointer(bool state);   // X
+    void set_advanced_cin_ban_not_allowed(int32_t index, bool state);   // X
+    void set_advanced_cin_secure_input(int32_t index, bool state);  // X
+
+    int32_t get_color(int32_t index);
+    bool get_mark_choose_status();
+    bool get_pointer_status();
+    bool get_optimization_status();
+    bool get_checkbox_status(int32_t index);
+    std::vector<bool> get_all_checkbox_status();
+    std::string get_advanced_cin_input(int32_t index);
+    std::vector<string> get_all_advacned_cin_input();
+
+    bool is_checkbox(int32_t index);
+    bool is_advanced_cin(int32_t index);
+    bool is_advanced_cin_correct(int32_t index);
+    bool is_all_advanced_cin_correct();
+
+    void clear_everything();
+
+    // ------------ Handler объекты (для цепочки)
+    // уведомления
+    class NotificationHandler {
+        EasyMenu& m;
+        int index;
+    public:
+        NotificationHandler(EasyMenu& m, int index);
+
+        NotificationHandler& notification(string new_notification);
+        NotificationHandler& color(int color_id);
+    };
+    // кнопки
+    class ButtonHandle {
+        EasyMenu& m;
+        int index;
+    public:
+        ButtonHandle(EasyMenu& m, int index);
+
+        ButtonHandle& name(string new_name);
+        ButtonHandle& color(int color_id);
+        NotificationHandler notification(string new_notification);
+    };
+    // текст
+    class TextHandle {
+        EasyMenu& m;
+        int index;
+    public:
+        TextHandle(EasyMenu& m, int index);
+
+        TextHandle& text(string new_text);
+        TextHandle& color(int color_id);
+    };
+    // чекбоксы
+    class CheckboxHandle {
+        EasyMenu& m;
+        int index;
+    public:
+        CheckboxHandle(EasyMenu& m, int index);
+
+        CheckboxHandle& text(string new_text);
+        CheckboxHandle& color(int color_id);
+        CheckboxHandle& state(bool new_state);
+        NotificationHandler notification(string new_notification);
+    };
+    // ввод
+    class InputHandle {
+        EasyMenu& m;
+        int index;
+    public:
+        InputHandle(EasyMenu& m, int index);
+
+        InputHandle& name(string new_name);
+        InputHandle& name_color(int color_id);
+        InputHandle& length(int new_length);
+        InputHandle& origional_text(string new_text);
+        InputHandle& allowed(string new_allowed);
+        InputHandle& allowed(vector<char> new_allowed);
+        InputHandle& filter(bool new_state);
+        InputHandle& secure(bool new_state);
+        InputHandle& dictionary(EasyDict* dictionary_ptr);
+        NotificationHandler notification(string new_notification);
+    };
+    // очистка
+    class ClearHandle {
+        EasyMenu& m;
+    public:
+        ClearHandle(EasyMenu& m);
+
+        ClearHandle& text();
+        ClearHandle& notifications();
+        ClearHandle& info();
+    };
+    // инфо в style
+    class Info_StyleHandle {
+        EasyMenu& m;
+    public:
+        Info_StyleHandle(EasyMenu& m);
+
+        Info_StyleHandle& add(string new_info);
+        Info_StyleHandle& color(int color_id);
+        Info_StyleHandle& remove();
+    };
+    // basic colors в style
+    class BasicColor_StyleHandle {
+        EasyMenu& m;
+    public:
+        BasicColor_StyleHandle(EasyMenu& m);
+
+        BasicColor_StyleHandle& button(int color_id);
+        BasicColor_StyleHandle& text(int color_id);
+        BasicColor_StyleHandle& checkbox(int color_id);
+        BasicColor_StyleHandle& choise(int color_id);
+        BasicColor_StyleHandle& pointer(int color_id);
+        BasicColor_StyleHandle& correct_input(int color_id);
+        BasicColor_StyleHandle& uncorrect_input(int color_id);
+    };
+    // settings в style
+    class Settings_StyleHandle {
+        EasyMenu& m;
+    public:
+        Settings_StyleHandle(EasyMenu& m);
+
+        Settings_StyleHandle& x_y_pos(int x, int y);
+        Settings_StyleHandle& choise(bool state = true);
+        Settings_StyleHandle& pointer(bool state = true);
+        Settings_StyleHandle& pointer_symbols(string new_pointer = "-->");
+    };
+    
+
+    // --------- под-объект Add
+    class AddAPI {
+        EasyMenu& m;
+    public:
+        AddAPI(EasyMenu& m);
+
+        ButtonHandle button(string name);
+        ButtonHandle button(string name, int index);
+        TextHandle text(string text);
+        TextHandle text(string text, int index);
+        CheckboxHandle checkbox(string text, bool state = false);
+        CheckboxHandle checkbox(string text, int index, bool state = false);
+        InputHandle input(string name, string original_input = "");
+        InputHandle input(string name, int index, string original_input = "");
+    };
+    class EditAPI {
+        EasyMenu& m;
+    public:
+        EditAPI(EasyMenu& m);
+
+        ButtonHandle button(int index);
+        TextHandle text(int index);
+        CheckboxHandle checkbox(int index);
+        InputHandle input(int index);
+    };
+    class ClearAPI {
+        EasyMenu& m;
+    public:
+        ClearAPI(EasyMenu& m);
+
+        ClearHandle text();
+        ClearHandle notifications();
+        ClearHandle info();
+        void all();
+    };
+    class NotificationAPI {
+        EasyMenu& m;
+    public:
+        NotificationAPI(EasyMenu& m);
+
+        NotificationHandler add(string new_notifiction, int index);
+        NotificationHandler remove(int index);
+        NotificationHandler color(int index, int color_id);
+        void clear();
+    };
+    class StyleAPI {
+        EasyMenu& m;
+
+        class Info_StyleAPI {
+            StyleAPI& parent;
+        public:
+            Info_StyleAPI(StyleAPI& parent);
+
+            Info_StyleHandle add(string new_info);
+            Info_StyleHandle color(int color_id);
+            Info_StyleHandle remove();
+        };
+        class BasicColor_StyleAPI {
+            StyleAPI& parent;
+        public:
+            BasicColor_StyleAPI(StyleAPI& parent);
+
+            BasicColor_StyleHandle button(int color_id);
+            BasicColor_StyleHandle text(int color_id);
+            BasicColor_StyleHandle checkbox(int color_id);
+            BasicColor_StyleHandle choise(int color_id);
+            BasicColor_StyleHandle pointer(int color_id);
+            BasicColor_StyleHandle correct_input(int color_id);
+            BasicColor_StyleHandle uncorrect_input(int color_id);
+        };
+        class Settings_StyleAPI {
+            StyleAPI& parent;
+        public:
+            Settings_StyleAPI(StyleAPI& parent);
+
+            Settings_StyleHandle x_y_pos(int x, int y);
+            Settings_StyleHandle choise(bool state = true);
+            Settings_StyleHandle pointer(bool state = true);
+            Settings_StyleHandle pointer_symbols(string new_pointer = "-->");
+        };
+    public:
+        StyleAPI(EasyMenu& m);
+
+        Info_StyleAPI info;
+        BasicColor_StyleAPI basic_color;
+        Settings_StyleAPI settings;
+    };
+    class GetAPI {
+        EasyMenu& m;
+    public:
+        GetAPI(EasyMenu& m);
+
+        bool checkbox(int index);
+        vector<bool> checkbox();
+        string input(int index);
+        vector<string> input();
+        bool input_error(int index);
+        bool input_error();
+        
+    };
+
+public:
+    EasyMenu();
+    EasyMenu(string button);
+    EasyMenu(string first_button, string second_button);
+    EasyMenu(vector<string> buttons);
+
+    int run();
+
+    void remove();
+    void remove(int index);
+
+    // под-объекты 
+    AddAPI add;
+    EditAPI edit;
+    ClearAPI clear;
+    NotificationAPI notification;
+    StyleAPI style;
+    GetAPI get;
 };
 
 //-------------------------------------------------------------------------------------------------------------------
