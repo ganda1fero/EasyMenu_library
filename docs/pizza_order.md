@@ -1,5 +1,5 @@
 # "Pizza order" `example`
-[![go back](https://img.shields.io/badge/go%20back-white?style=flat&logo=windows)](../README.md)
+[go back](../README.md)
 ```cpp
 #include "EasyMenu.h"
 
